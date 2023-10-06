@@ -1,4 +1,6 @@
 /.env
 /main
 /.dockerignore
-/
+/db.d
+/Makefile
+/README.md

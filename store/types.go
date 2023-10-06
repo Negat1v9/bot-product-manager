@@ -28,13 +28,15 @@ type GroupRepo interface {
 // NOTE: Merge ProductList and Product Repositories
 type ProductListRepo interface {
 	Create(ctx context.Context, p *ProductList) error
-	Get(ctx context.Context, litsID int) (*ProductList, error)
+	GetListID(ctx context.Context, listName string) (int, error)
 	GetAll(ctx context.Context, UserID int) ([]ProductList, error)
 	Delete(ctx context.Context, listID int) error
 }
 
 type ProductRepo interface {
-	Add(ctx context.Context, p *Product) error
+	Create(ctx context.Context, listID int) error
+	GetAll(ctx context.Context, listID int) (*Product, error)
+	Add(ctx context.Context, p Product) error
 	Delete(ctx context.Context, productID int) error
 }
 
@@ -63,7 +65,7 @@ type ProductList struct {
 
 // product copy
 type Product struct {
-	ID     int
-	Name   string
-	ListID int
+	ID       int
+	ListID   int
+	Products []string
 }

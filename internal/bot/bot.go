@@ -65,18 +65,24 @@ func (b *Bot) startPooling(updates tgbotapi.UpdatesChannel) error {
 			// manage cmd or message to hub
 			msg, err := b.hub.MessageUpdate(update.Message)
 			if err != nil {
-				b.logger.Error("Manage - Create Message:", err.Error())
+				b.logger.Error("Manage - Create Message:", slog.String("error", err.Error()))
 				continue
 			}
 			if _, err := b.client.Send(msg); err != nil {
-				b.logger.Error("Not sending message:")
+				b.logger.Error("Not sending message:", slog.String("error", err.Error()))
+			}
+		}
+		if update.CallbackQuery != nil {
+			msg, err := b.hub.CallBackUpdate(*update.CallbackQuery)
+			if err != nil {
+				b.logger.Error("Manage callback update:", slog.String("error", err.Error()))
+				continue
+			}
+			if _, err = b.client.Send(msg); err != nil {
+				b.logger.Error("Not sending message from callback", slog.String("error", err.Error()))
 			}
 		}
 		b.logger.Info("Query", slog.Duration("time", time.Now().Sub(start)))
-		if update.CallbackQuery != nil {
-			// TODO: Add to hub callback parametr
-			continue
-		}
 	}
 	return nil
 }

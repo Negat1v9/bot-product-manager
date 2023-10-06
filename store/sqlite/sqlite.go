@@ -73,8 +73,8 @@ func (s *Store) CreateTables() error {
 	_, err = s.db.Exec(`
 	CREATE TABLE IF NOT EXISTS "product"(
 		id INTEGER PRIMARY KEY,
-		name TEXT NOT NULL,
 		list_id INTEGER NOT NULL,
+		products TEXT DEFALUT ' ',
 		FOREIGN KEY (list_id) REFERENCES product_list(id) ON DELETE CASCADE
 	);`)
 	if err != nil {

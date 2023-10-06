@@ -2,7 +2,6 @@ package sqlite
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/Negat1v9/telegram-bot-orders/store"
 )
@@ -26,18 +25,40 @@ func (r *ProductListRepo) Create(ctx context.Context, p *store.ProductList) erro
 }
 
 // get list products with id
-func (r *ProductListRepo) Get(ctx context.Context, listID int) (*store.ProductList, error) {
-	stmt, err := r.storage.db.Prepare(
-		`SELECT * FROM product_list WHERE id = ?;`)
+// func (r *ProductListRepo) Get(ctx context.Context, listID int) (*store.ProductList, error) {
+// 	stmt, err := r.storage.db.Prepare(
+// 		`SELECT (id, owner_id, group_id, name) FROM product_list WHERE id = ?;`)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	var productList store.ProductList
+// 	err = stmt.QueryRowContext(ctx, listID).Scan(
+// 		&productList.ID,
+// 		&productList.OwnerID,
+// 		&productList.GroupID,
+// 		&productList.Name,
+// 	)
+// 	if err != nil {
+// 		if err == sql.ErrNoRows {
+// 			return nil, store.NoRowListOfProduct
+// 		}
+// 		return nil, err
+// 	}
+// 	return &productList, nil
+// }
+
+func (r *ProductListRepo) GetListID(ctx context.Context, listName string) (int, error) {
+	var id int
+	err := r.storage.db.QueryRowContext(
+		ctx,
+		`SELECT id FROM product_list WHERE name=?`,
+		listName,
+	).Scan(&id)
+
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
-	var productList store.ProductList
-	err = stmt.QueryRowContext(ctx, listID).Scan(&productList.ID, &productList.GroupID)
-	if err != nil {
-		return nil, err
-	}
-	return &productList, nil
+	return id, nil
 }
 
 func (r *ProductListRepo) GetAll(ctx context.Context, UserID int) ([]store.ProductList, error) {
@@ -49,13 +70,15 @@ func (r *ProductListRepo) GetAll(ctx context.Context, UserID int) ([]store.Produ
 	defer row.Close()
 	for row.Next() {
 		var list store.ProductList
-		err := row.Scan(&list.ID, &list.OwnerID, &list.GroupID)
+		err := row.Scan(&list.ID, &list.OwnerID, &list.GroupID, &list.Name)
 		if err != nil {
 			return nil, err
 		}
 		lists = append(lists, list)
 	}
-	fmt.Println(lists)
+	if len(lists) == 0 {
+		return nil, store.NoRowListOfProductError
+	}
 	return lists, nil
 }
 
