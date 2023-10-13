@@ -35,22 +35,30 @@ func (s *Store) CreateTables() error {
 	}
 
 	_, err = s.db.Exec(`
-	CREATE TABLE IF NOT EXISTS "manager_group"(
+	CREATE TABLE IF NOT EXISTS "group_info"(
 		id INTEGER PRIMARY KEY,
-		owner_id INTEGER NOT NULL,
-		FOREIGN KEY (owner_id) REFERENCES users (id)
+		owner_id INTEGER,
+		group_name TEXT NOT NULL,
+		FOREIGN KEY (owner_id)
+			REFERENCES users (id)
 		);`)
 	if err != nil {
 		return errors.New(pkg + ": " + err.Error())
 	}
 
 	_, err = s.db.Exec(`
-	CREATE TABLE IF NOT EXISTS "group" (
-		user_id INTEGER NOT NULL,
-		group_id INTEGER NOT NULL,
+	CREATE TABLE IF NOT EXISTS "user_group" (
+		user_id INTEGER,
+		group_id INTEGER,
 		PRIMARY KEY(user_id, group_id),
-		FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
-		FOREIGN KEY (group_id) REFERENCES manager_group(id) ON DELETE CASCADE
+		CONSTRAINT fk_user_group_1
+			FOREIGN KEY (user_id)
+			REFERENCES users (id)
+			ON DELETE CASCADE,
+		CONSTRAINT fk_user_group_2
+			FOREIGN KEY (group_id)
+			REFERENCES group_info (id)
+			ON DELETE CASCADE
 		);`)
 	if err != nil {
 		return errors.New(pkg + ": " + err.Error())
@@ -59,11 +67,17 @@ func (s *Store) CreateTables() error {
 	_, err = s.db.Exec(`
 	CREATE TABLE IF NOT EXISTS "product_list"(
 		id INTEGER PRIMARY KEY,
-		owner_id INTEGER NOT NULL,
-		group_id INTEGER DEFAULT NULL,
+		owner_id INTEGER,
+		group_id INTEGER,
 		name TEXT NOT NULL,
-		FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE,
-		FOREIGN KEY (group_id) REFERENCES manager_group(id) ON DELETE CASCADE
+		CONSTRAINT fk_product_list_1
+			FOREIGN KEY (owner_id)
+			REFERENCES users(id)
+			ON DELETE CASCADE,
+		CONSTRAINT fk_product_list_2
+			FOREIGN KEY (group_id)
+			REFERENCES group_info(id)
+			ON DELETE CASCADE
 
 	);`)
 	if err != nil {
@@ -73,10 +87,14 @@ func (s *Store) CreateTables() error {
 	_, err = s.db.Exec(`
 	CREATE TABLE IF NOT EXISTS "product"(
 		id INTEGER PRIMARY KEY,
-		list_id INTEGER NOT NULL,
+		list_id INTEGER,
 		products TEXT DEFALUT ' ',
-		FOREIGN KEY (list_id) REFERENCES product_list(id) ON DELETE CASCADE
-	);`)
+		CONSTRAINT fk_product_1
+			FOREIGN KEY (list_id)
+			REFERENCES product_list(id)
+			ON DELETE CASCADE
+	); 
+	PRAGMA foreign_keys = ON;`)
 	if err != nil {
 		return errors.New(pkg + ": " + err.Error())
 	}

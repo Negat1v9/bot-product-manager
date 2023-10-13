@@ -56,21 +56,44 @@ func (h *Hub) MessageUpdate(msg *tgbotapi.Message) (*tgbotapi.MessageConfig, err
 }
 
 func (h *Hub) CallBackUpdate(cbq tgbotapi.CallbackQuery) (*tgbotapi.MessageConfig, error) {
+	var msg *tgbotapi.MessageConfig
+	var err error
 	switch {
+
 	case isGetProductList(cbq.Data):
-		listID, listName := parseIDNameList(cbq.Data)
-		msg, err := h.getProductList(cbq.From.ID, listID, listName)
-		if err != nil {
-			return nil, err
-		}
-		return msg, nil
+		listID, listName := parseIDName(cbq.Data)
+		msg, err = h.getProductList(cbq.From.ID, listID, listName)
+
 	case isAddNewProduct(cbq.Data):
 		listName := parseNameListFromProductAction(cbq.Data)
-		msg := h.createMessage(cbq.From.ID, addNewProductMessage+listName)
+		msg = h.createMessage(cbq.From.ID, addNewProductMessage+listName)
+
+	case isGetGroupLists(cbq.Data):
+		groupID := parseGroupID(cbq.Data)
+		msg, err = h.GetGroupLists(cbq.From.ID, groupID)
+
+	case isCreateGroupList(cbq.Data):
+		groupID := parseGroupID(cbq.Data)
+		msg, err = h.createMessageCreateGroupList(cbq.From.ID, groupID)
+
+	case isCompliteProductList(cbq.Data):
+		listName := parseNameListFromProductAction(cbq.Data)
+		msg, err = h.compliteProductList(cbq.From.ID, listName)
+
+	case isGetUsersForDelGroup(cbq.Data):
+		groupID := parseGroupID(cbq.Data)
+		msg, err = h.getUserForDeleteFrGr(cbq.From.ID, groupID)
+	// case isAddNewUserGroup(cbq.Data):
+	// TODO: create func
+	case isDeleteUserFromGroup(cbq.Data):
+		userID, groupID := parseCallBackDeleteUser(cbq.Data)
+		msg, err = h.deleteUserFromGroup(cbq.From.ID, userID, groupID)
+	}
+	if err != nil {
+		return nil, err
+	}
+	if msg != nil {
 		return msg, nil
-		// case isCreateAddProduct(cbq.Data):
-		// 	listName := parseNameListFromProductAction(cbq.Data)
-		// 	msg := h.
 	}
 	return nil, NoCallbackDataError
 }
@@ -78,7 +101,7 @@ func (h *Hub) CallBackUpdate(cbq tgbotapi.CallbackQuery) (*tgbotapi.MessageConfi
 func (h *Hub) isCommand(text string, msgInfo *tgbotapi.Message) (*tgbotapi.MessageConfig, error) {
 	switch text {
 	case "/start":
-		msg, err := h.cmdStrart(msgInfo.From.UserName, msgInfo.Chat.ID)
+		msg, err := h.cmdStrart(msgInfo.From.UserName, msgInfo.From.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -101,6 +124,15 @@ func (h *Hub) isMessage(text string, msgInfo *tgbotapi.Message) (*tgbotapi.Messa
 			return nil, err
 		}
 		return msg, nil
+	case isGetUserGroup(text):
+		msg, err := h.GetAllUserGroup(msgInfo.Chat.ID, msgInfo.From.ID)
+		if err != nil {
+			return nil, err
+		}
+		return msg, nil
+	case isCreateGroup(text):
+		msg := h.createMessageForNewGroup(msgInfo.Chat.ID)
+		return msg, nil
 	}
 	return nil, nil
 }
@@ -113,8 +145,8 @@ func (h *Hub) isForwardMessage(msg *tgbotapi.Message) (*tgbotapi.MessageConfig, 
 	switch {
 	case isCreateNameForward(text):
 		list := &store.ProductList{
-			OwnerID: msg.From.ID,
-			Name:    msg.Text,
+			OwnerID: &msg.From.ID,
+			Name:    &msg.Text,
 		}
 		msg, err := h.createList(msg.Chat.ID, list)
 		if err != nil {
@@ -122,7 +154,8 @@ func (h *Hub) isForwardMessage(msg *tgbotapi.Message) (*tgbotapi.MessageConfig, 
 		}
 		return msg, nil
 	case isAddNewProductForward(text):
-		listName := parseNameList(text)
+		listName := parseNameListForAddProd(text)
+		// FIXME: function for getting listID put in addNewProduct()
 		listID, err := h.db.ProductList().GetListID(context.TODO(), listName)
 		if err != nil {
 			return nil, err
@@ -134,6 +167,25 @@ func (h *Hub) isForwardMessage(msg *tgbotapi.Message) (*tgbotapi.MessageConfig, 
 			return nil, err
 		}
 		return msg, nil
+	case isCreateNewGroupForward(text):
+		managerGroup := &store.GroupInfo{
+			OwnerID:   msg.From.ID,
+			GroupName: msg.Text,
+		}
+		msg, err := h.createNewGroup(msg.Chat.ID, managerGroup)
+		if err != nil {
+			return nil, err
+		}
+		return msg, nil
+	case isCreateGroupListForward(text):
+		newListName := parseGroupListName(msg.Text)
+		groupName := parseGroupListName(text)
+		msg, err := h.createGroupList(msg.From.ID, newListName, groupName)
+		if err != nil {
+			return nil, err
+		}
+		return msg, nil
+
 	default:
 		return nil, nil
 

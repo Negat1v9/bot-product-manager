@@ -1,8 +1,8 @@
 package telegram
 
 import (
+	"fmt"
 	"strconv"
-	// "github.com/Negat1v9/telegram-bot-orders/store"
 )
 
 func createMessageProductList(p []string) string {
@@ -26,4 +26,9 @@ func createMessageSuccessAddedProduct(p []string) string {
 		s = append(s, row...)
 	}
 	return string(s)
+}
+
+func createMessgeToInviteNewUser(ownerName, groupName string) string {
+	s := fmt.Sprintf(inviteUserMessage, groupName)
+	return s
 }

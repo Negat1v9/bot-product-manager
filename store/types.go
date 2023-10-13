@@ -17,7 +17,12 @@ type UserRepo interface {
 }
 
 type ManagerGroupRepo interface {
-	Create(ctx context.Context, ownerID int) error
+	Create(ctx context.Context, g *GroupInfo) (int, error)
+	ByGroupName(ctx context.Context, groupName string) (*GroupInfo, error)
+	ByGroupID(ctx context.Context, groupID int) (*GroupInfo, error)
+	AllByGroupID(ctx context.Context, groupID int) (*GroupList, error)
+	UserGroup(ctx context.Context, userID int) ([]GroupInfo, error)
+	InfoGroup(ctx context.Context, groupID int) (*GroupInfo, error)
 }
 
 type GroupRepo interface {
@@ -45,22 +50,25 @@ type User struct {
 	UserName string
 }
 
-type ManagerGroup struct {
-	ID       int
-	Owner_id int
+type GroupInfo struct {
+	ID        int
+	OwnerID   int64
+	GroupName string
+	UsersInfo *[]User
 }
 
 type Group struct {
-	UserID  int
+	UserID  int64
 	GroupID int
 }
 
-// One list products
+// One list products all value is a poinet ->
+// group can have 0 products list
 type ProductList struct {
-	ID      int
-	OwnerID int64
+	ID      *int
+	OwnerID *int64
 	GroupID *int
-	Name    string
+	Name    *string
 }
 
 // product copy
@@ -68,4 +76,9 @@ type Product struct {
 	ID       int
 	ListID   int
 	Products []string
+}
+
+type GroupList struct {
+	PruductLists []ProductList
+	GroupOwnerID int64
 }

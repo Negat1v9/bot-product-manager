@@ -24,34 +24,11 @@ func (r *ProductListRepo) Create(ctx context.Context, p *store.ProductList) erro
 	return nil
 }
 
-// get list products with id
-// func (r *ProductListRepo) Get(ctx context.Context, listID int) (*store.ProductList, error) {
-// 	stmt, err := r.storage.db.Prepare(
-// 		`SELECT (id, owner_id, group_id, name) FROM product_list WHERE id = ?;`)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	var productList store.ProductList
-// 	err = stmt.QueryRowContext(ctx, listID).Scan(
-// 		&productList.ID,
-// 		&productList.OwnerID,
-// 		&productList.GroupID,
-// 		&productList.Name,
-// 	)
-// 	if err != nil {
-// 		if err == sql.ErrNoRows {
-// 			return nil, store.NoRowListOfProduct
-// 		}
-// 		return nil, err
-// 	}
-// 	return &productList, nil
-// }
-
 func (r *ProductListRepo) GetListID(ctx context.Context, listName string) (int, error) {
 	var id int
 	err := r.storage.db.QueryRowContext(
 		ctx,
-		`SELECT id FROM product_list WHERE name=?`,
+		`SELECT id FROM product_list WHERE name=?;`,
 		listName,
 	).Scan(&id)
 
@@ -61,16 +38,17 @@ func (r *ProductListRepo) GetListID(ctx context.Context, listName string) (int, 
 	return id, nil
 }
 
-func (r *ProductListRepo) GetAll(ctx context.Context, UserID int) ([]store.ProductList, error) {
+func (r *ProductListRepo) GetAll(ctx context.Context, userID int) ([]store.ProductList, error) {
 	lists := []store.ProductList{}
-	row, err := r.storage.db.QueryContext(ctx, `SELECT * FROM product_list WHERE owner_id=?`, UserID)
+	row, err := r.storage.db.QueryContext(ctx,
+		`SELECT * FROM product_list WHERE owner_id=? AND group_id=NULL;`, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer row.Close()
 	for row.Next() {
 		var list store.ProductList
-		err := row.Scan(&list.ID, &list.OwnerID, &list.GroupID, &list.Name)
+		err = row.Scan(&list.ID, &list.OwnerID, &list.GroupID, &list.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -84,12 +62,11 @@ func (r *ProductListRepo) GetAll(ctx context.Context, UserID int) ([]store.Produ
 
 // delete full list with all product inside
 func (r *ProductListRepo) Delete(ctx context.Context, listID int) error {
-	stmt, err := r.storage.db.Prepare(
-		`DELETE FROM TABLE product_list WHERE id = ?;`)
+	_, err := r.storage.db.ExecContext(ctx,
+		`DELETE FROM product_list WHERE id = ?;`,
+		listID,
+	)
 	if err != nil {
-		return err
-	}
-	if _, err = stmt.QueryContext(ctx, listID); err != nil {
 		return err
 	}
 	return nil

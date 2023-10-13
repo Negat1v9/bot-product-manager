@@ -2,5 +2,6 @@
 /main
 /.dockerignore
 /db.d
+/database.db
 /Makefile
 /README.md

@@ -13,7 +13,7 @@ type GroupRepo struct {
 func (r *GroupRepo) AddUser(ctx context.Context, g *store.Group) error {
 	_, err := r.storage.db.ExecContext(
 		ctx,
-		`INSERT INTO TABLE group (user_id, group_id) VALUES (?, ?);`,
+		`INSERT INTO user_group (user_id, group_id) VALUES (?, ?);`,
 		g.UserID,
 		g.GroupID,
 	)
@@ -28,7 +28,7 @@ func (r *GroupRepo) AddUser(ctx context.Context, g *store.Group) error {
 func (r *GroupRepo) DeleteUser(ctx context.Context, g *store.Group) error {
 	_, err := r.storage.db.ExecContext(
 		ctx,
-		`DELETE FROM group WHERE user_id=? AND group_id=?;`,
+		`DELETE FROM user_group WHERE user_id=? AND group_id=?;`,
 		g.UserID,
 		g.GroupID,
 	)

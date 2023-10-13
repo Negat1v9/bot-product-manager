@@ -8,18 +8,56 @@ import (
 )
 
 var (
-	prefixCallBackProductList = "IDNAME"
+	prefixCallBackListProduct   = "IDNAME"
+	prefixCallBackListGroup     = "IDGROUP"
+	prefixCallBackDelUserFromGr = "DelUsIDGrID"
 )
 
 func createCallBackListProducts(id int, name string) *string {
-	s := prefixCallBackProductList + strconv.Itoa(id) + name
+	s := prefixCallBackListProduct + strconv.Itoa(id) + name
 	return &s
 }
 
-func parseIDNameList(s string) (int, string) {
+func createCallBackGroupLists(groupID int) *string {
+	s := prefixCallBackListGroup + strconv.Itoa(groupID)
+	return &s
+}
+func createCallBackDeleteUserGroup(userID, groupID string) *string {
+	s := prefixCallBackDelUserFromGr + userID + "-" + groupID
+	return &s
+}
+
+func parseGroupID(s string) int {
+	var id int
+	for i := range s {
+		// isDigit
+		if s[i] >= 48 && s[i] <= 57 {
+			id, _ = strconv.Atoi(s[i:])
+			break
+		}
+	}
+	return id
+}
+
+// First parametr - userID second - groupID
+func parseCallBackDeleteUser(s string) (uID int64, gID int) {
+	sID := []byte{}
+	for i := len(prefixCallBackDelUserFromGr); i < len(s); i++ {
+		if s[i] == '-' {
+			uID, _ = strconv.ParseInt(string(sID), 10, 64)
+			sID = []byte{}
+			continue
+		}
+		sID = append(sID, s[i])
+	}
+	gID, _ = strconv.Atoi(string(sID))
+	return
+}
+
+func parseIDName(s string) (int, string) {
 	sID := []byte{}
 	var name string
-	for i := len(prefixCallBackProductList); i < len(s); i++ {
+	for i := len(prefixCallBackListProduct); i < len(s); i++ {
 		if s[i] >= 48 && s[i] <= 57 {
 			sID = append(sID, s[i])
 		} else {
@@ -35,8 +73,8 @@ func parseIDNameList(s string) (int, string) {
 func parseNameListFromProductAction(s string) string {
 	name := []byte{}
 	startName := false
-	for i := range s {
-		if string(s[i]) == "-" && !startName {
+	for i, v := range s {
+		if v == '-' && !startName {
 			startName = true
 			continue
 		}
@@ -82,7 +120,11 @@ func cutLineBreak(s string) string {
 	return s[l : r+1]
 }
 
-func parseNameList(s string) string {
+func parseNameListForAddProd(s string) string {
 	res, _ := strings.CutPrefix(s, addNewProductMessage)
+	return res
+}
+func parseGroupListName(s string) string {
+	res, _ := strings.CutPrefix(s, answerCreateGroupListMsg)
 	return res
 }

@@ -56,7 +56,6 @@ func (b *Bot) Start(dbURL string) error {
 	return b.startPooling(updates)
 }
 
-// TODO: Edit parametrs in error logger, make it
 func (b *Bot) startPooling(updates tgbotapi.UpdatesChannel) error {
 	for update := range updates {
 		// Message update
