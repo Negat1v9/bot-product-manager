@@ -3,11 +3,21 @@ package telegram
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
+	"time"
 
 	manager "github.com/Negat1v9/telegram-bot-orders/internal"
 	"github.com/Negat1v9/telegram-bot-orders/store"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	tg "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+)
+
+const (
+	CommandUpdate = iota
+	TextUpdate
+	ForwardMessageUpdate
+	CallBackUpdate
+	InvalidTypeUpdate
 )
 
 var (
@@ -15,90 +25,105 @@ var (
 )
 
 type Hub struct {
-	db store.Store
+	db       store.Store
+	response chan<- *MessageWithTime
 }
 
-func NewHub(db store.Store) manager.Manager {
+func NewHub(db store.Store, resCh chan<- *MessageWithTime) manager.Manager {
 	return &Hub{
-		db: db,
+		db:       db,
+		response: resCh,
 	}
 }
 
-func (h *Hub) MessageUpdate(msg *tgbotapi.Message) (*tgbotapi.MessageConfig, error) {
+func (h *Hub) MessageUpdate(msg *tg.Message, timeStart time.Time) (err error) {
 	text := toLowerCase(msg.Text)
-	var answer *tgbotapi.MessageConfig
-	var err error
-	// command message
-	answer, err = h.isCommand(text, msg)
+
+	var res *tg.MessageConfig
+
+	typeUpdate := h.getTypeMessage(text, msg)
+
+	switch typeUpdate {
+	case CommandUpdate:
+		res, err = h.isCommand(text, msg)
+
+	case ForwardMessageUpdate:
+		res, err = h.isForwardMessage(msg)
+
+	case TextUpdate:
+		res, err = h.isMessage(text, msg)
+
+	}
 	if err != nil {
-		return nil, err
+		return err
 	}
-	if answer != nil {
-		return answer, nil
-	}
-	// Message is Forward
-	answer, err = h.isForwardMessage(msg)
-	if err != nil {
-		return nil, err
-	}
-	if answer != nil {
-		return answer, nil
-	}
-	// only text message
-	answer, err = h.isMessage(text, msg)
-	if err != nil {
-		return nil, err
-	}
-	if answer != nil {
-		return answer, nil
-	}
-	return h.cmdDefault(msg.Chat.ID), nil
+	h.response <- &MessageWithTime{res, timeStart}
+	return nil
 }
 
-func (h *Hub) CallBackUpdate(cbq tgbotapi.CallbackQuery) (*tgbotapi.MessageConfig, error) {
-	var msg *tgbotapi.MessageConfig
+func (h *Hub) getTypeMessage(text string, msg *tg.Message) int {
+	if isCommandUpdate(text) {
+		return CommandUpdate
+	}
+	if msg.ReplyToMessage != nil {
+		return ForwardMessageUpdate
+	}
+	return TextUpdate
+}
+
+func (h *Hub) CallBackUpdate(cbq *tg.CallbackQuery, timeStart time.Time) error {
+	var res *tg.MessageConfig
 	var err error
 	switch {
 
 	case isGetProductList(cbq.Data):
 		listID, listName := parseIDName(cbq.Data)
-		msg, err = h.getProductList(cbq.From.ID, listID, listName)
+		res, err = h.getProductList(cbq.From.ID, listID, listName)
 
 	case isAddNewProduct(cbq.Data):
 		listName := parseNameListFromProductAction(cbq.Data)
-		msg = h.createMessage(cbq.From.ID, addNewProductMessage+listName)
+		res = h.createMessage(cbq.From.ID, addNewProductMessage+listName)
 
 	case isGetGroupLists(cbq.Data):
 		groupID := parseGroupID(cbq.Data)
-		msg, err = h.GetGroupLists(cbq.From.ID, groupID)
+		res, err = h.GetGroupLists(cbq.From.ID, groupID)
 
 	case isCreateGroupList(cbq.Data):
 		groupID := parseGroupID(cbq.Data)
-		msg, err = h.createMessageCreateGroupList(cbq.From.ID, groupID)
+		res, err = h.createMessageCreateGroupList(cbq.From.ID, groupID)
 
 	case isCompliteProductList(cbq.Data):
 		listName := parseNameListFromProductAction(cbq.Data)
-		msg, err = h.compliteProductList(cbq.From.ID, listName)
+		res, err = h.compliteProductList(cbq.From.ID, listName)
 
 	case isGetUsersForDelGroup(cbq.Data):
 		groupID := parseGroupID(cbq.Data)
-		msg, err = h.getUserForDeleteFrGr(cbq.From.ID, groupID)
-	// case isAddNewUserGroup(cbq.Data):
-	// TODO: create func
+		res, err = h.getUserForDeleteFrGr(cbq.From.ID, groupID)
+	case isAddNewUserGroup(cbq.Data):
+		groupID := parseGroupID(cbq.Data)
+		res, err = h.createMessageForInviteUser(cbq.From.ID, groupID)
+
+	case isUserReadyInvite(cbq.Data):
+		userID, groupID := parseCallBackGroupActions(cbq.Data)
+		fmt.Println("hub:", cbq.Data)
+		res, err = h.userReadyJoinGroup(cbq.From.ID, userID, groupID)
+
 	case isDeleteUserFromGroup(cbq.Data):
-		userID, groupID := parseCallBackDeleteUser(cbq.Data)
-		msg, err = h.deleteUserFromGroup(cbq.From.ID, userID, groupID)
+		userID, groupID := parseCallBackGroupActions(cbq.Data)
+		res, err = h.deleteUserFromGroup(cbq.From.ID, userID, groupID)
 	}
+
 	if err != nil {
-		return nil, err
+		return err
 	}
-	if msg != nil {
-		return msg, nil
+	if res != nil {
+		h.response <- &MessageWithTime{res, timeStart}
+		return nil
 	}
-	return nil, NoCallbackDataError
+	return NoCallbackDataError
 }
 
-func (h *Hub) isCommand(text string, msgInfo *tgbotapi.Message) (*tgbotapi.MessageConfig, error) {
+func (h *Hub) isCommand(text string, msgInfo *tg.Message) (*tg.MessageConfig, error) {
 	switch text {
 	case "/start":
 		msg, err := h.cmdStrart(msgInfo.From.UserName, msgInfo.From.ID)
@@ -113,7 +138,7 @@ func (h *Hub) isCommand(text string, msgInfo *tgbotapi.Message) (*tgbotapi.Messa
 	return nil, nil
 }
 
-func (h *Hub) isMessage(text string, msgInfo *tgbotapi.Message) (*tgbotapi.MessageConfig, error) {
+func (h *Hub) isMessage(text string, msgInfo *tg.Message) (*tg.MessageConfig, error) {
 	switch {
 	case isCreateList(text):
 		msg := h.answerToCreateList(msgInfo.From.ID)
@@ -137,22 +162,18 @@ func (h *Hub) isMessage(text string, msgInfo *tgbotapi.Message) (*tgbotapi.Messa
 	return nil, nil
 }
 
-func (h *Hub) isForwardMessage(msg *tgbotapi.Message) (*tgbotapi.MessageConfig, error) {
-	if msg.ReplyToMessage == nil {
-		return nil, nil
-	}
+func (h *Hub) isForwardMessage(msg *tg.Message) (*tg.MessageConfig, error) {
 	text := msg.ReplyToMessage.Text
+	var res *tg.MessageConfig
+	var err error
 	switch {
 	case isCreateNameForward(text):
 		list := &store.ProductList{
 			OwnerID: &msg.From.ID,
 			Name:    &msg.Text,
 		}
-		msg, err := h.createList(msg.Chat.ID, list)
-		if err != nil {
-			return nil, err
-		}
-		return msg, nil
+		res, err = h.createList(msg.Chat.ID, list)
+
 	case isAddNewProductForward(text):
 		listName := parseNameListForAddProd(text)
 		// FIXME: function for getting listID put in addNewProduct()
@@ -162,38 +183,36 @@ func (h *Hub) isForwardMessage(msg *tgbotapi.Message) (*tgbotapi.MessageConfig, 
 		}
 		products := parseStringToProducts(msg.Text, listID)
 
-		msg, err := h.addNewProduct(msg.Chat.ID, products, listName)
-		if err != nil {
-			return nil, err
-		}
-		return msg, nil
+		res, err = h.addNewProduct(msg.Chat.ID, products, listName)
+
 	case isCreateNewGroupForward(text):
 		managerGroup := &store.GroupInfo{
 			OwnerID:   msg.From.ID,
 			GroupName: msg.Text,
 		}
-		msg, err := h.createNewGroup(msg.Chat.ID, managerGroup)
-		if err != nil {
-			return nil, err
-		}
-		return msg, nil
+		res, err = h.createNewGroup(msg.Chat.ID, managerGroup)
+
 	case isCreateGroupListForward(text):
 		newListName := parseGroupListName(msg.Text)
 		groupName := parseGroupListName(text)
-		msg, err := h.createGroupList(msg.From.ID, newListName, groupName)
-		if err != nil {
-			return nil, err
-		}
-		return msg, nil
+		res, err = h.createGroupList(msg.From.ID, newListName, groupName)
 
-	default:
-		return nil, nil
-
+	case isSendInviteToNewUser(text):
+		groupName := parseNameGroupAddUser(text)
+		newUserName := parseUserNickNameForAddGroup(msg.Text)
+		res, err = h.inviteNewUser(msg.From.ID, newUserName, groupName)
 	}
+	if err != nil {
+		return nil, err
+	}
+	if res != nil {
+		return res, nil
+	}
+	return nil, nil
 }
 
-func (h *Hub) createMessage(ChatId int64, text string) *tgbotapi.MessageConfig {
-	msgCongig := tgbotapi.NewMessage(ChatId, text)
+func (h *Hub) createMessage(ChatId int64, text string) *tg.MessageConfig {
+	msgCongig := tg.NewMessage(ChatId, text)
 	return &msgCongig
 }
 

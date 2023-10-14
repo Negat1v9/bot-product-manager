@@ -212,3 +212,43 @@ func (h *Hub) deleteUserFromGroup(ChatID, userID int64, groupID int) (*tg.Messag
 	msg := h.createMessage(ChatID, successDeletedUser)
 	return msg, nil
 }
+
+func (h *Hub) createMessageForInviteUser(chatID int64, groupID int) (*tg.MessageConfig, error) {
+	group, err := h.db.ManagerGroup().ByGroupID(context.TODO(), groupID)
+	if err != nil {
+		return nil, err
+	}
+	msg := h.createMessage(chatID, textForInvitingNewUser+group.GroupName)
+	return msg, nil
+}
+
+func (h *Hub) inviteNewUser(ChatID int64, newUserName, groupName string) (*tg.MessageConfig, error) {
+	group, err := h.db.ManagerGroup().ByGroupName(context.TODO(), groupName)
+	if err != nil {
+		return nil, err
+	}
+	err = h.sendInviteMessage(newUserName, group.ID, ChatID)
+	if err != nil {
+		if err == userAlredyGroupError || err == userNoExistError {
+			msg := h.createMessage(ChatID, err.Error())
+			return msg, nil
+		}
+	}
+	msg := h.createMessage(ChatID, inviteSendMessage)
+	return msg, nil
+}
+
+func (h *Hub) userReadyJoinGroup(ChatID, newUserID int64, groupID int) (*tg.MessageConfig, error) {
+	g := &store.Group{
+		UserID:  newUserID,
+		GroupID: groupID,
+	}
+	err := h.db.Group().AddUser(context.TODO(), g)
+	if err != nil {
+		return nil, err
+	}
+	msg := h.createMessage(ChatID, userInvitedInGroupMessage)
+	return msg, nil
+}
+
+// func (h *Hub) userRefuseJoinGroup()

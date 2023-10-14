@@ -4,6 +4,13 @@ import (
 	"strings"
 )
 
+func isCommandUpdate(u string) bool {
+	if string(u[0]) == "/" {
+		return true
+	}
+	return false
+}
+
 func isCreateList(s string) bool {
 	return strings.EqualFold(s, buttonCreateList)
 }
@@ -47,6 +54,17 @@ func isDeleteUserFromGroup(s string) bool {
 	return strings.HasPrefix(s, prefixCallBackDelUserFromGr)
 }
 
+func isUserReadyInvite(s string) bool {
+	return strings.HasPrefix(s, prefixCallBackInsertUserGroup)
+}
+func isUserRefuseInvite(s string) bool {
+	return strings.HasPrefix(s, prefixCallBackRefuseUserGroup)
+}
+
+func isSendInviteToNewUser(s string) bool {
+	return strings.HasPrefix(s, textForInvitingNewUser)
+}
+
 func isAddNewProduct(s string) bool {
 	return strings.HasPrefix(s, "add-")
 }
@@ -67,8 +85,3 @@ func isGetUsersForDelGroup(s string) bool {
 func isCompliteProductList(s string) bool {
 	return strings.HasPrefix(s, "comple-")
 }
-
-// // TODO: make faster
-// func isAddCommand(s string) bool {
-// 	return strings.ContainsAny(s, button)
-// }

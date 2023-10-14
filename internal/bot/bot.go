@@ -12,9 +12,15 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+const (
+	bufferMessages       = 10
+	logDuractionResponse = "time create and send response"
+)
+
 type Bot struct {
 	timeOut int
 	offset  int
+	output  chan *MessageWithTime
 	client  *tgbotapi.BotAPI
 	logger  *slog.Logger
 	hub     manager.Manager
@@ -24,6 +30,7 @@ func New(client *tgbotapi.BotAPI, timeOut int, offset int) *Bot {
 	return &Bot{
 		timeOut: timeOut,
 		offset:  offset,
+		output:  make(chan *MessageWithTime, bufferMessages),
 		client:  client,
 		logger:  slog.New(slog.NewTextHandler(os.Stdout, nil)),
 	}
@@ -43,7 +50,7 @@ func (b *Bot) Start(dbURL string) error {
 		return err
 	}
 
-	b.hub = NewHub(store)
+	b.hub = NewHub(store, b.output)
 
 	configBot := tgbotapi.NewUpdate(b.offset)
 
@@ -52,40 +59,73 @@ func (b *Bot) Start(dbURL string) error {
 	updates := b.client.GetUpdatesChan(configBot)
 	// set commands for bot
 	b.client.Send(tgbotapi.NewSetMyCommands(botCommands...))
-
+	go b.MessageSender()
 	return b.startPooling(updates)
 }
 
 func (b *Bot) startPooling(updates tgbotapi.UpdatesChannel) error {
 	for update := range updates {
 		// Message update
-		start := time.Now()
 		if update.Message != nil {
 			// manage cmd or message to hub
-			msg, err := b.hub.MessageUpdate(update.Message)
-			if err != nil {
-				b.logger.Error("Manage - Create Message:", slog.String("error", err.Error()))
-				continue
-			}
-			if _, err := b.client.Send(msg); err != nil {
-				b.logger.Error("Not sending message:", slog.String("error", err.Error()))
-			}
+			go func(msg *tgbotapi.Message) {
+				start := time.Now()
+				err := b.hub.MessageUpdate(msg, start)
+
+				if err != nil {
+					b.logger.Error("Manage - Create Message:",
+						slog.String("error", err.Error()))
+				}
+				return
+				// if err = b.sendMessage(res); err != nil {
+				// 	b.logger.Error("not sended message",
+				// 		slog.String("error", err.Error()))
+				// }
+				// b.logger.Info("time message routing", slog.Duration("time", time.Now().Sub(s)))
+			}(update.Message)
+			continue
 		}
 		if update.CallbackQuery != nil {
-			msg, err := b.hub.CallBackUpdate(*update.CallbackQuery)
-			if err != nil {
-				b.logger.Error("Manage callback update:", slog.String("error", err.Error()))
-				continue
-			}
-			if _, err = b.client.Send(msg); err != nil {
-				b.logger.Error("Not sending message from callback", slog.String("error", err.Error()))
-			}
+			go func(c *tgbotapi.CallbackQuery) {
+				start := time.Now()
+				err := b.hub.CallBackUpdate(c, start)
+
+				if err != nil {
+					b.logger.Error("Manage callback update:",
+						slog.String("error", err.Error()))
+				}
+
+				// if err = b.sendMessage(res); err != nil {
+
+				// }
+				// b.logger.Info("time message routing", slog.Duration("time", time.Now().Sub(s)))
+			}(update.CallbackQuery)
 		}
-		b.logger.Info("Query", slog.Duration("time", time.Now().Sub(start)))
+		continue
 	}
 	return nil
 }
 
+func (b *Bot) MessageSender() error {
+	for {
+		select {
+		case msg := <-b.output:
+			go func() {
+				defer func() {
+					b.logger.Info(logDuractionResponse,
+						slog.Duration(" ", time.Now().Sub(msg.WorkTime)))
+				}()
+				if _, err := b.client.Send(msg.Msg); err != nil {
+					b.logger.Error("not sended message",
+						slog.String("error", err.Error()))
+					return
+				}
+			}()
+		default:
+			continue
+		}
+	}
+}
 func initDB(URL string) (*sql.DB, error) {
 	db, err := sql.Open("sqlite3", URL)
 	if err != nil {

@@ -13,6 +13,7 @@ type Store interface {
 
 type UserRepo interface {
 	Add(ctx context.Context, u *User) error
+	ByUserName(ctx context.Context, userName string) (*User, error)
 	IsExist(ctx context.Context, u *User) (bool, error)
 }
 
@@ -27,6 +28,7 @@ type ManagerGroupRepo interface {
 
 type GroupRepo interface {
 	AddUser(ctx context.Context, g *Group) error
+	GroupByUserAndGroupID(ctx context.Context, userID int64, groupID int) (*GroupInfo, error)
 	DeleteUser(ctx context.Context, g *Group) error
 }
 
@@ -46,7 +48,7 @@ type ProductRepo interface {
 }
 
 type User struct {
-	ChatID   int
+	ChatID   int64
 	UserName string
 }
 

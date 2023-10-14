@@ -1,8 +1,12 @@
 package manager
 
-import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+import (
+	"time"
+
+	tg "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+)
 
 type Manager interface {
-	MessageUpdate(msg *tgbotapi.Message) (*tgbotapi.MessageConfig, error)
-	CallBackUpdate(cbq tgbotapi.CallbackQuery) (*tgbotapi.MessageConfig, error)
+	MessageUpdate(msg *tg.Message, t time.Time) error
+	CallBackUpdate(cbq *tg.CallbackQuery, t time.Time) error
 }

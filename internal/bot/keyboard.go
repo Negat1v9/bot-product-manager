@@ -96,11 +96,24 @@ func createInlineDeleteUser(users []store.User, groupID int) *tg.InlineKeyboardM
 	keyboard := &tg.InlineKeyboardMarkup{}
 	var button tg.InlineKeyboardButton
 	for _, user := range users {
-		sUsID, sGrID := strconv.Itoa(user.ChatID), strconv.Itoa(groupID)
+		sUsID, sGrID := strconv.FormatInt(user.ChatID, 10), strconv.Itoa(groupID)
 		callBack := createCallBackDeleteUserGroup(sUsID, sGrID)
 		button = tg.NewInlineKeyboardButtonData(user.UserName, *callBack)
 		keyboard.InlineKeyboard = append(keyboard.InlineKeyboard,
 			[]tg.InlineKeyboardButton{button})
 	}
 	return keyboard
+}
+
+func createInlineInviteUserGroup(groupID int, newUserID int64) *tg.InlineKeyboardMarkup {
+	sUsID, sGrID := strconv.FormatInt(newUserID, 10), strconv.Itoa(groupID)
+	keyboard := tg.NewInlineKeyboardMarkup(
+		tg.NewInlineKeyboardRow(
+			tg.NewInlineKeyboardButtonData(
+				"join", *createCallBackInsertNewUserGroup(sUsID, sGrID)),
+			tg.NewInlineKeyboardButtonData(
+				"refuse", *createCallBackRefuseGroup(sUsID, sGrID)),
+		),
+	)
+	return &keyboard
 }

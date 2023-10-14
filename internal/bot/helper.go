@@ -8,9 +8,11 @@ import (
 )
 
 var (
-	prefixCallBackListProduct   = "IDNAME"
-	prefixCallBackListGroup     = "IDGROUP"
-	prefixCallBackDelUserFromGr = "DelUsIDGrID"
+	prefixCallBackListProduct     = "IDNAME"
+	prefixCallBackListGroup       = "IDGROUP"
+	prefixCallBackDelUserFromGr   = "DelUsIDGrID"
+	prefixCallBackInsertUserGroup = "insertInGroup"
+	prefixCallBackRefuseUserGroup = "refuseInGroup"
 )
 
 func createCallBackListProducts(id int, name string) *string {
@@ -26,6 +28,15 @@ func createCallBackDeleteUserGroup(userID, groupID string) *string {
 	s := prefixCallBackDelUserFromGr + userID + "-" + groupID
 	return &s
 }
+func createCallBackInsertNewUserGroup(userID, groupID string) *string {
+	s := prefixCallBackInsertUserGroup + userID + "-" + groupID
+	return &s
+}
+
+func createCallBackRefuseGroup(userID, groupID string) *string {
+	s := prefixCallBackRefuseUserGroup + userID + "-" + groupID
+	return &s
+}
 
 func parseGroupID(s string) int {
 	var id int
@@ -39,18 +50,24 @@ func parseGroupID(s string) int {
 	return id
 }
 
+// NOTE: for add and refuse inviting maybe groupID is not nessesory
 // First parametr - userID second - groupID
-func parseCallBackDeleteUser(s string) (uID int64, gID int) {
-	sID := []byte{}
-	for i := len(prefixCallBackDelUserFromGr); i < len(s); i++ {
-		if s[i] == '-' {
-			uID, _ = strconv.ParseInt(string(sID), 10, 64)
-			sID = []byte{}
+func parseCallBackGroupActions(s string) (uID int64, gID int) {
+	tempID := []byte{}
+	isStartIds := false // if names contains "-"
+	for i := 0; i < len(s); i++ {
+		if s[i] == '-' && !isStartIds {
+			uID, _ = strconv.ParseInt(string(tempID), 10, 64)
+			tempID = []byte{}
+			isStartIds = true
 			continue
 		}
-		sID = append(sID, s[i])
+
+		if s[i] >= 48 && s[i] <= 57 {
+			tempID = append(tempID, s[i])
+		}
 	}
-	gID, _ = strconv.Atoi(string(sID))
+	gID, _ = strconv.Atoi(string(tempID))
 	return
 }
 
@@ -120,6 +137,16 @@ func cutLineBreak(s string) string {
 	return s[l : r+1]
 }
 
+// example NickName "@NaemNuam"
+func parseUserNickNameForAddGroup(s string) string {
+	return s[1:]
+}
+
+func parseNameGroupAddUser(s string) string {
+	res, _ := strings.CutPrefix(s, textForInvitingNewUser)
+	return res
+}
+
 func parseNameListForAddProd(s string) string {
 	res, _ := strings.CutPrefix(s, addNewProductMessage)
 	return res
@@ -127,4 +154,23 @@ func parseNameListForAddProd(s string) string {
 func parseGroupListName(s string) string {
 	res, _ := strings.CutPrefix(s, answerCreateGroupListMsg)
 	return res
+}
+
+// Check slice of users and compare with target ID
+func checkUserInGroup(targetUserID int64, users []store.User) bool {
+	for _, user := range users {
+		if user.ChatID == targetUserID {
+			return true
+		}
+	}
+	return false
+}
+
+func searchOwnerGroup(ownerID int64, users []store.User) *store.User {
+	for _, user := range users {
+		if user.ChatID == ownerID {
+			return &user
+		}
+	}
+	return nil
 }

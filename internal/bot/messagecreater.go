@@ -29,6 +29,6 @@ func createMessageSuccessAddedProduct(p []string) string {
 }
 
 func createMessgeToInviteNewUser(ownerName, groupName string) string {
-	s := fmt.Sprintf(inviteUserMessage, groupName)
+	s := fmt.Sprintf(inviteUserMessage, ownerName, groupName)
 	return s
 }

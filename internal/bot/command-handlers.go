@@ -11,7 +11,7 @@ import (
 func (h *Hub) cmdStrart(userName string, chatID int64) (*tgbotapi.MessageConfig, error) {
 	// obj user
 	u := &store.User{
-		ChatID:   int(chatID),
+		ChatID:   chatID,
 		UserName: userName,
 	}
 	// To confirm user in db or not

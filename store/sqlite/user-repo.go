@@ -22,6 +22,24 @@ func (r *UserRepo) Add(ctx context.Context, u *store.User) error {
 	return nil
 }
 
+func (r *UserRepo) ByUserName(ctx context.Context, userName string) (*store.User, error) {
+	u := &store.User{}
+	err := r.storage.db.QueryRowContext(ctx,
+		`SELECT id, name FROM users WHERE name=?;`,
+		userName,
+	).Scan(
+		&u.ChatID,
+		&userName,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, store.NoExistUserError
+		}
+		return nil, err
+	}
+	return u, nil
+}
+
 func (r *UserRepo) IsExist(ctx context.Context, u *store.User) (bool, error) {
 	id := -1
 	err := r.storage.db.QueryRowContext(ctx, `SELECT id FROM users WHERE id=?;`, u.ChatID).Scan(&id)

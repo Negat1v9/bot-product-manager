@@ -3,7 +3,6 @@ package sqlite
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
 	"github.com/Negat1v9/telegram-bot-orders/store"
 )
@@ -48,19 +47,23 @@ func (r *ManagerGroupRepo) ByGroupID(ctx context.Context, groupID int) (*store.G
 func (r *ManagerGroupRepo) ByGroupName(ctx context.Context, gN string) (*store.GroupInfo, error) {
 	groupInfo := store.GroupInfo{}
 	err := r.storage.db.QueryRowContext(ctx,
-		`SELECT group_info.id
+		`SELECT group_info.id, group_info.group_name, group_info.owner_id
 			FROM group_info
-		WHERE group_info.group_name=?;`,
+		WHERE group_info.group_name = ?;`,
 		gN,
-	).Scan(
-		&groupInfo.ID,
+	).Scan(&groupInfo.ID,
+		&groupInfo.GroupName,
+		&groupInfo.OwnerID,
 	)
+
 	if err != nil {
 		return nil, err
 	}
+
 	return &groupInfo, nil
 }
 
+// FIXME: move to product-list repository
 func (r *ManagerGroupRepo) AllByGroupID(ctx context.Context, groupID int) (*store.GroupList, error) {
 	groupList := store.GroupList{}
 	rows, err := r.storage.db.QueryContext(ctx,
@@ -99,12 +102,8 @@ func (r *ManagerGroupRepo) AllByGroupID(ctx context.Context, groupID int) (*stor
 	return &groupList, nil
 }
 
+// FIXME: move to group-repository
 func (r *ManagerGroupRepo) InfoGroup(ctx context.Context, groupID int) (*store.GroupInfo, error) {
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Println(r)
-		}
-	}()
 	rows, err := r.storage.db.QueryContext(ctx,
 		`SELECT group_info.id, group_info.group_name, group_info.owner_id,
 			users.name,
@@ -135,6 +134,8 @@ func (r *ManagerGroupRepo) InfoGroup(ctx context.Context, groupID int) (*store.G
 	return &grInfo, nil
 }
 
+// InfoGroupByName
+// FIXME: move to group-repository
 func (r *ManagerGroupRepo) UserGroup(ctx context.Context, userID int) ([]store.GroupInfo, error) {
 	rows, err := r.storage.db.QueryContext(ctx,
 		`SELECT group_info.id, group_info.group_name, group_info.owner_id

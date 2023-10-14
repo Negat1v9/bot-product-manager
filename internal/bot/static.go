@@ -18,6 +18,7 @@ var (
 	buttonGetUserGroup = "get-group"
 	buttonNewGroup     = "create-group"
 )
+var commandStart = ""
 var createGroupMessage string = "Перешлите это сообщение, с названием вашей группы :)"
 var groupIsCreatesMessage string = "Новая группа создана"
 var emptyListMessage string = "Пока что ваш список пуст"
@@ -28,5 +29,7 @@ var answerCreateGroupListMsg = `Ответе на это сообщение, ч�
 var answerCreateListMsg string = `Чтобы создать новый лист, просто ответе на это сообщение с названием списка.`
 var addNewProductMessage string = `Ответе на это сообщение, чтобы добавить новые продукты в список - `
 var successDeletedUser string = `User success deleted`
-
+var textForInvitingNewUser string = `forward this message with the name of the user you want to invite - `
 var inviteUserMessage string = `User %s invited you to group %s, do you want to join it?`
+var inviteSendMessage string = `Invitation sent`
+var userInvitedInGroupMessage string = "Congratulations, you joined the group %s"
