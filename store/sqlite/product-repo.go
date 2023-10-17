@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 
 	"github.com/Negat1v9/telegram-bot-orders/store"
 )
@@ -30,16 +31,23 @@ func (r *ProductRepo) Create(ctx context.Context, listID int) error {
 
 func (r *ProductRepo) Add(ctx context.Context, p store.Product) error {
 	productsString, err := r.ConvertProductString(p.Products)
+	fmt.Println("product-repo", productsString)
 	if err != nil {
 		return err
 	}
-	stmt := "UPDATE product SET products=? WHERE list_id=?;"
+	var id *int
+	stmt := `UPDATE product
+			SET products=? 
+			WHERE list_id=?
+			RETURNING id;`
 
-	_, err = r.storage.db.ExecContext(ctx, stmt, productsString, p.ListID)
+	err = r.storage.db.QueryRowContext(ctx, stmt, productsString, p.ListID).Scan(&id)
 	if err != nil {
 		return err
 	}
-
+	if id == nil {
+		fmt.Println("products update was not")
+	}
 	return nil
 }
 
@@ -47,9 +55,9 @@ func (r *ProductRepo) GetAll(ctx context.Context, listID int) (*store.Product, e
 	var products string
 	var p store.Product
 	err := r.storage.db.QueryRowContext(ctx,
-		`SELECT id, products FROM product WHERE list_id=?`,
+		`SELECT id, list_id, products FROM product WHERE list_id=?`,
 		listID,
-	).Scan(&p.ID, &products)
+	).Scan(&p.ID, &p.ListID, &products)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, store.NoRowProductError

@@ -2,7 +2,6 @@ package sqlite
 
 import (
 	"context"
-
 	"github.com/Negat1v9/telegram-bot-orders/store"
 )
 
@@ -41,7 +40,8 @@ func (r *ProductListRepo) GetListID(ctx context.Context, listName string) (int, 
 func (r *ProductListRepo) GetAll(ctx context.Context, userID int) ([]store.ProductList, error) {
 	lists := []store.ProductList{}
 	row, err := r.storage.db.QueryContext(ctx,
-		`SELECT * FROM product_list WHERE owner_id=? AND group_id=NULL;`, userID)
+		`SELECT product_list.id, product_list.owner_id, product_list.group_id, product_list.name
+		 FROM product_list WHERE owner_id=? AND group_id IS NULL;`, userID)
 	if err != nil {
 		return nil, err
 	}

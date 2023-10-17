@@ -25,7 +25,9 @@ func createListProductInline(lists []store.ProductList) tg.InlineKeyboardMarkup 
 	var listOfProductList tg.InlineKeyboardMarkup
 	var button tg.InlineKeyboardButton
 	for _, list := range lists {
-		callBack := createCallBackListProducts(*list.ID, *list.Name)
+		stID := strconv.Itoa(*list.ID)
+		callBack := createCallBackFewParam(prefixCallBackListProduct, stID, *list.Name)
+		// callBack := createCallBackListProducts(*list.ID, *list.Name)
 		button = tg.InlineKeyboardButton{Text: *list.Name, CallbackData: callBack}
 		buttonRow := []tg.InlineKeyboardButton{button}
 		listOfProductList.InlineKeyboard = append(listOfProductList.InlineKeyboard, buttonRow)
@@ -36,16 +38,21 @@ func createListProductInline(lists []store.ProductList) tg.InlineKeyboardMarkup 
 func createProductsInline(listName string) *tg.InlineKeyboardMarkup {
 	keyboard := tg.NewInlineKeyboardMarkup(
 		tg.NewInlineKeyboardRow(
-			tg.NewInlineKeyboardButtonData("add", "add-"+listName),
-			tg.NewInlineKeyboardButtonData("change", "change-"+listName),
-			tg.NewInlineKeyboardButtonData("complite", "comple-"+listName),
+			tg.NewInlineKeyboardButtonData(
+				"add", *createCallBackOneParam(prefixAddProductList, listName)),
+			tg.NewInlineKeyboardButtonData(
+				"change", *createCallBackOneParam(prefixChangeList, listName)),
+			tg.NewInlineKeyboardButtonData(
+				"complite", *createCallBackOneParam(prefixCompliteList, listName)),
 		),
 	)
 	return &keyboard
 }
 
 func createInlineGetCurList(listID int, listName string) tg.InlineKeyboardMarkup {
-	data := createCallBackListProducts(listID, listName)
+	sListID := strconv.Itoa(listID)
+	data := createCallBackFewParam(prefixCallBackListProduct, sListID, listName)
+	// data := createCallBackListProducts(listID, listName)
 	keyboard := tg.NewInlineKeyboardMarkup(
 		tg.NewInlineKeyboardRow(
 			tg.NewInlineKeyboardButtonData("View list", *data),
@@ -58,7 +65,9 @@ func createInlineGroupName(groups []store.GroupInfo) *tg.InlineKeyboardMarkup {
 	var keyboard = tg.InlineKeyboardMarkup{}
 	var groupButton tg.InlineKeyboardButton
 	for _, group := range groups {
-		callBack := createCallBackGroupLists(group.ID)
+		sGroupID := strconv.Itoa(group.ID)
+		callBack := createCallBackOneParam(prefixCallBackListGroup, sGroupID)
+		// callBack := createCallBackGroupLists(group.ID)
 		groupButton = tg.InlineKeyboardButton{Text: group.GroupName, CallbackData: callBack}
 		keyboard.InlineKeyboard = append(keyboard.InlineKeyboard,
 			[]tg.InlineKeyboardButton{groupButton},
@@ -67,11 +76,13 @@ func createInlineGroupName(groups []store.GroupInfo) *tg.InlineKeyboardMarkup {
 	return &keyboard
 }
 
-func createInlineGroupList(lists []store.ProductList, groupID int, isOwnerGroup bool) tg.InlineKeyboardMarkup {
+func createInlineGroupList(lists []store.ProductList, groupID int, isOwnerGroup bool) *tg.InlineKeyboardMarkup {
 	keyboard := tg.InlineKeyboardMarkup{}
 	var button tg.InlineKeyboardButton
 	for _, list := range lists {
-		callBack := createCallBackListProducts(*list.ID, *list.Name)
+		sListID := strconv.Itoa(*list.ID)
+		callBack := createCallBackFewParam(prefixCallBackListProduct, sListID, *list.Name)
+		// callBack := createCallBackListProducts(*list.ID, *list.Name)
 		button = tg.InlineKeyboardButton{Text: *list.Name, CallbackData: callBack}
 		keyboard.InlineKeyboard = append(keyboard.InlineKeyboard, []tg.InlineKeyboardButton{button})
 	}
@@ -79,15 +90,18 @@ func createInlineGroupList(lists []store.ProductList, groupID int, isOwnerGroup 
 		row := createInlineGroupActions(groupID)
 		keyboard.InlineKeyboard = append(keyboard.InlineKeyboard, row)
 	}
-	return keyboard
+	return &keyboard
 }
 
 func createInlineGroupActions(groupID int) []tg.InlineKeyboardButton {
 	sGroupID := strconv.Itoa(groupID)
 	buttonRow := tg.NewInlineKeyboardRow(
-		tg.NewInlineKeyboardButtonData("create", "createGroupList-"+sGroupID),
-		tg.NewInlineKeyboardButtonData("add users", "addUserGroup-"+sGroupID),
-		tg.NewInlineKeyboardButtonData("del users", "GetDeleteUser-"+sGroupID),
+		tg.NewInlineKeyboardButtonData(
+			"create", *createCallBackOneParam(prefixCreateGroupList, sGroupID)),
+		tg.NewInlineKeyboardButtonData(
+			"add users", *createCallBackOneParam(prefixAddUserGroup, sGroupID)),
+		tg.NewInlineKeyboardButtonData(
+			"del users", *createCallBackOneParam(prefixGetUserToDelete, sGroupID)),
 	)
 	return buttonRow
 }
@@ -97,7 +111,8 @@ func createInlineDeleteUser(users []store.User, groupID int) *tg.InlineKeyboardM
 	var button tg.InlineKeyboardButton
 	for _, user := range users {
 		sUsID, sGrID := strconv.FormatInt(user.ChatID, 10), strconv.Itoa(groupID)
-		callBack := createCallBackDeleteUserGroup(sUsID, sGrID)
+		callBack := createCallBackFewParam(prefixCallBackDelUserFromGr, sUsID, sGrID)
+		// callBack := createCallBackDeleteUserGroup(sUsID, sGrID)
 		button = tg.NewInlineKeyboardButtonData(user.UserName, *callBack)
 		keyboard.InlineKeyboard = append(keyboard.InlineKeyboard,
 			[]tg.InlineKeyboardButton{button})
@@ -110,9 +125,11 @@ func createInlineInviteUserGroup(groupID int, newUserID int64) *tg.InlineKeyboar
 	keyboard := tg.NewInlineKeyboardMarkup(
 		tg.NewInlineKeyboardRow(
 			tg.NewInlineKeyboardButtonData(
-				"join", *createCallBackInsertNewUserGroup(sUsID, sGrID)),
+				"join",
+				*createCallBackFewParam(prefixCallBackInsertUserGroup, sUsID, sGrID)),
 			tg.NewInlineKeyboardButtonData(
-				"refuse", *createCallBackRefuseGroup(sUsID, sGrID)),
+				"refuse",
+				*createCallBackFewParam(prefixCallBackRefuseUserGroup, sUsID, sGrID)),
 		),
 	)
 	return &keyboard

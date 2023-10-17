@@ -1,121 +1,75 @@
 package telegram
 
 import (
+	// "strconv"
 	"strconv"
 	"strings"
 
+	helper "github.com/Negat1v9/telegram-bot-orders/internal/helpers"
 	"github.com/Negat1v9/telegram-bot-orders/store"
 )
 
-var (
-	prefixCallBackListProduct     = "IDNAME"
-	prefixCallBackListGroup       = "IDGROUP"
-	prefixCallBackDelUserFromGr   = "DelUsIDGrID"
-	prefixCallBackInsertUserGroup = "insertInGroup"
-	prefixCallBackRefuseUserGroup = "refuseInGroup"
-)
-
-func createCallBackListProducts(id int, name string) *string {
-	s := prefixCallBackListProduct + strconv.Itoa(id) + name
-	return &s
+// create callback with one parametr
+func createCallBackOneParam(prefix string, data string) *string {
+	res := prefix + data
+	return &res
 }
 
-func createCallBackGroupLists(groupID int) *string {
-	s := prefixCallBackListGroup + strconv.Itoa(groupID)
-	return &s
-}
-func createCallBackDeleteUserGroup(userID, groupID string) *string {
-	s := prefixCallBackDelUserFromGr + userID + "-" + groupID
-	return &s
-}
-func createCallBackInsertNewUserGroup(userID, groupID string) *string {
-	s := prefixCallBackInsertUserGroup + userID + "-" + groupID
-	return &s
+func parseCallBackOneParam(prefix, callBack string) string {
+	return callBack[len(prefix):]
 }
 
-func createCallBackRefuseGroup(userID, groupID string) *string {
-	s := prefixCallBackRefuseUserGroup + userID + "-" + groupID
-	return &s
-}
-
-func parseGroupID(s string) int {
-	var id int
-	for i := range s {
-		// isDigit
-		if s[i] >= 48 && s[i] <= 57 {
-			id, _ = strconv.Atoi(s[i:])
-			break
-		}
+// create callback view like prefisDATA1-DATA2...
+func createCallBackFewParam(prefix string, data ...string) *string {
+	res := []byte{}
+	res = append(res, []byte(prefix+data[0])...)
+	for i := 1; i < len(data); i++ {
+		res = append(res, []byte("-"+data[i])...)
 	}
-	return id
+	s := string(res)
+	return &s
 }
-
-// NOTE: for add and refuse inviting maybe groupID is not nessesory
-// First parametr - userID second - groupID
-func parseCallBackGroupActions(s string) (uID int64, gID int) {
-	tempID := []byte{}
-	isStartIds := false // if names contains "-"
-	for i := 0; i < len(s); i++ {
-		if s[i] == '-' && !isStartIds {
-			uID, _ = strconv.ParseInt(string(tempID), 10, 64)
-			tempID = []byte{}
-			isStartIds = true
+func parseCallBackFewParam(prefix, callBack string) []string {
+	res := []string{}
+	start := len(prefix)
+	for i := len(prefix); i < len(callBack); i++ {
+		if callBack[i] == '-' {
+			res = append(res, callBack[start:i])
+			start = i + 1
 			continue
 		}
-
-		if s[i] >= 48 && s[i] <= 57 {
-			tempID = append(tempID, s[i])
-		}
 	}
-	gID, _ = strconv.Atoi(string(tempID))
-	return
+	res = append(res, callBack[start:])
+	return res
 }
 
-func parseIDName(s string) (int, string) {
-	sID := []byte{}
-	var name string
-	for i := len(prefixCallBackListProduct); i < len(s); i++ {
-		if s[i] >= 48 && s[i] <= 57 {
-			sID = append(sID, s[i])
-		} else {
-			name = s[i:]
-			break
-		}
+// convert string to int second parametr is typeInt default return 0
+func convSToI[T int | int64](p string, base int) T {
+	switch base {
+	case 0:
+		res, _ := strconv.ParseInt(p, 10, 64)
+		return T(res)
+	case 64:
+		res, _ := strconv.ParseInt(p, 10, 0)
+		return T(int(res))
+	default:
+		return 0
 	}
-	id, _ := strconv.Atoi(string(sID))
-	return id, name
 }
 
-// For example "add-122 || comlp-22"
-func parseNameListFromProductAction(s string) string {
-	name := []byte{}
-	startName := false
-	for i, v := range s {
-		if v == '-' && !startName {
-			startName = true
-			continue
-		}
-		if startName {
-			name = append(name, s[i])
-		}
-	}
-	return string(name)
-}
-
-// pr, pr
 // Parse Latter is: "," || "."
 func parseStringToProducts(s string, listID int) store.Product {
 	products := []string{}
 	prev := 0
 	for i := range s {
 		if s[i] == ',' || s[i] == '.' {
-			products = append(products, cutLineBreak(s[prev:i]))
+			products = append(products, helper.CutLineBreak((s[prev:i])))
 			prev = i + 1
 		}
 	}
 	// if String does not ends on "." or ","
 	if prev != len(s) {
-		products = append(products, cutLineBreak(s[prev:]))
+		products = append(products, helper.CutLineBreak(s[prev:]))
 	}
 	res := store.Product{
 		Products: products,
@@ -123,18 +77,45 @@ func parseStringToProducts(s string, listID int) store.Product {
 	}
 	return res
 }
-func cutLineBreak(s string) string {
-	l, r := 0, len(s)-1
+
+// NOTE: Test this
+func parseIndexEditProduct(s string) map[int]bool {
+	res := make(map[int]bool)
+	temp := ""
 	for i := range s {
-		if s[i] == '\n' || s[i] == ' ' {
-			l++
-		} else if s[r] == '\n' || s[r] == ' ' {
-			r--
-		} else {
-			break
+		if s[i] >= 48 && s[i] <= 57 {
+			temp += string(s[i])
+
+		} else if temp != "" {
+			t, err := strconv.Atoi(temp)
+			if err != nil {
+				temp = ""
+				continue
+			}
+			res[t-1] = true
+			temp = ""
 		}
 	}
-	return s[l : r+1]
+	if temp != "" {
+		t, _ := strconv.Atoi(temp)
+		res[t-1] = true
+	}
+	return res
+}
+
+func deleteProductByIndex(products []string, targets map[int]bool) []string {
+	capas := len(products) - len(targets)
+	if capas <= 0 {
+		capas = len(products)
+	}
+	res := make([]string, 0, capas)
+	for i := range products {
+		// if exist in target map -> delete
+		if _, ok := targets[i]; !ok {
+			res = append(res, products[i])
+		}
+	}
+	return res
 }
 
 // example NickName "@NaemNuam"
@@ -153,6 +134,11 @@ func parseNameListForAddProd(s string) string {
 }
 func parseGroupListName(s string) string {
 	res, _ := strings.CutPrefix(s, answerCreateGroupListMsg)
+	return res
+}
+
+func parseListNameEditList(s string) string {
+	res, _ := strings.CutPrefix(s, answerEditListMessage)
 	return res
 }
 

@@ -38,7 +38,8 @@ func (h *Hub) cmdHelp(chatID int64) *tgbotapi.MessageConfig {
 }
 
 // Handler for default message
-func (h *Hub) cmdDefault(chatID int64) *tgbotapi.MessageConfig {
-	msg := tgbotapi.NewMessage(chatID, "Default command")
-	return &msg
+func (h *Hub) cmdDefault(chatID int64, lastMsgID int) *tgbotapi.EditMessageTextConfig {
+	msg := h.editMessage(chatID, lastMsgID, "Edited!!!")
+	// msg := tgbotapi.NewMessage(chatID, "Default command")
+	return msg
 }

@@ -3,7 +3,6 @@ package telegram
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/Negat1v9/telegram-bot-orders/store"
@@ -35,7 +34,6 @@ func (h *Hub) sendInviteMessage(newUserName string, groupID int, ownerID int64) 
 	textForMsg := createMessgeToInviteNewUser(ownerGroup.UserName, groupInfo.GroupName)
 	msgForNewUser := h.createMessage(newUser.ChatID, textForMsg)
 	msgForNewUser.ReplyMarkup = createInlineInviteUserGroup(groupID, newUser.ChatID)
-	fmt.Println("DEBUG - 'sender_messages'", msgForNewUser.Text)
-	h.response <- &MessageWithTime{msgForNewUser, time.Now()}
+	h.response <- MessageWithTime{Msg: msgForNewUser, WorkTime: time.Now()}
 	return nil
 }

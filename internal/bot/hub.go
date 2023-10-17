@@ -1,9 +1,7 @@
 package telegram
 
 import (
-	"context"
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 
@@ -26,10 +24,10 @@ var (
 
 type Hub struct {
 	db       store.Store
-	response chan<- *MessageWithTime
+	response chan<- MessageWithTime
 }
 
-func NewHub(db store.Store, resCh chan<- *MessageWithTime) manager.Manager {
+func NewHub(db store.Store, resCh chan<- MessageWithTime) manager.Manager {
 	return &Hub{
 		db:       db,
 		response: resCh,
@@ -57,7 +55,15 @@ func (h *Hub) MessageUpdate(msg *tg.Message, timeStart time.Time) (err error) {
 	if err != nil {
 		return err
 	}
-	h.response <- &MessageWithTime{res, timeStart}
+	if res != nil {
+		h.response <- MessageWithTime{Msg: res, WorkTime: timeStart}
+		return nil
+	}
+	// send default message if user print something what we don`t know
+	h.response <- MessageWithTime{
+		EditMesage: h.cmdDefault(msg.From.ID, msg.MessageID-1),
+		WorkTime:   timeStart,
+	}
 	return nil
 }
 
@@ -72,55 +78,68 @@ func (h *Hub) getTypeMessage(text string, msg *tg.Message) int {
 }
 
 func (h *Hub) CallBackUpdate(cbq *tg.CallbackQuery, timeStart time.Time) error {
-	var res *tg.MessageConfig
+	var msg *tg.MessageConfig
+	var editMsg *tg.EditMessageTextConfig
 	var err error
 	switch {
-
 	case isGetProductList(cbq.Data):
-		listID, listName := parseIDName(cbq.Data)
-		res, err = h.getProductList(cbq.From.ID, listID, listName)
+		data := parseCallBackFewParam(prefixCallBackListProduct, cbq.Data)
+		listID, listName := convSToI[int](data[0], 0), data[1]
+		editMsg, err = h.getProductList(cbq.From.ID, cbq.Message.MessageID, listID, listName)
 
 	case isAddNewProduct(cbq.Data):
-		listName := parseNameListFromProductAction(cbq.Data)
-		res = h.createMessage(cbq.From.ID, addNewProductMessage+listName)
+		listName := parseCallBackOneParam(prefixAddProductList, cbq.Data)
+		msg = h.createMessage(cbq.From.ID, addNewProductMessage+listName)
 
 	case isGetGroupLists(cbq.Data):
-		groupID := parseGroupID(cbq.Data)
-		res, err = h.GetGroupLists(cbq.From.ID, groupID)
+		data := parseCallBackOneParam(prefixCallBackListGroup, cbq.Data)
+		groupID := convSToI[int](data, 0)
+		editMsg, err = h.GetGroupLists(cbq.From.ID, cbq.Message.MessageID, groupID)
+
+	case isEditProductList(cbq.Data):
+		groupName := parseCallBackOneParam(prefixChangeList, cbq.Data)
+		msg = h.createMessageForEditList(cbq.From.ID, groupName)
 
 	case isCreateGroupList(cbq.Data):
-		groupID := parseGroupID(cbq.Data)
-		res, err = h.createMessageCreateGroupList(cbq.From.ID, groupID)
+		data := parseCallBackOneParam(prefixCreateGroupList, cbq.Data)
+		groupID := convSToI[int](data, 0)
+		msg, err = h.createMessageCreateGroupList(cbq.From.ID, groupID)
 
 	case isCompliteProductList(cbq.Data):
-		listName := parseNameListFromProductAction(cbq.Data)
-		res, err = h.compliteProductList(cbq.From.ID, listName)
+		listName := parseCallBackOneParam(prefixCreateGroupList, cbq.Data)
+		msg, err = h.compliteProductList(cbq.From.ID, listName)
 
 	case isGetUsersForDelGroup(cbq.Data):
-		groupID := parseGroupID(cbq.Data)
-		res, err = h.getUserForDeleteFrGr(cbq.From.ID, groupID)
+		data := parseCallBackOneParam(prefixGetUserToDelete, cbq.Data)
+		groupID := convSToI[int](data, 0)
+		editMsg, err = h.getUserForDeleteFrGr(cbq.From.ID, cbq.Message.MessageID, groupID)
+
 	case isAddNewUserGroup(cbq.Data):
-		groupID := parseGroupID(cbq.Data)
-		res, err = h.createMessageForInviteUser(cbq.From.ID, groupID)
+		data := parseCallBackOneParam(prefixAddUserGroup, cbq.Data)
+		groupID := convSToI[int](data, 0)
+		msg, err = h.createMessageForInviteUser(cbq.From.ID, groupID)
 
 	case isUserReadyInvite(cbq.Data):
-		userID, groupID := parseCallBackGroupActions(cbq.Data)
-		fmt.Println("hub:", cbq.Data)
-		res, err = h.userReadyJoinGroup(cbq.From.ID, userID, groupID)
+		data := parseCallBackFewParam(prefixCallBackInsertUserGroup, cbq.Data)
+		userID, groupID := convSToI[int64](data[0], 64), convSToI[int](data[1], 0)
+		editMsg, err = h.userReadyJoinGroup(userID, groupID, cbq.Message.MessageID)
+
+	case isUserRefuseInvite(cbq.Data):
+		data := parseCallBackFewParam(prefixCallBackRefuseUserGroup, cbq.Data)
+		userID := convSToI[int64](data[0], 64)
+		editMsg = h.userRefuseJoinGroup(userID, cbq.Message.MessageID)
 
 	case isDeleteUserFromGroup(cbq.Data):
-		userID, groupID := parseCallBackGroupActions(cbq.Data)
-		res, err = h.deleteUserFromGroup(cbq.From.ID, userID, groupID)
+		data := parseCallBackFewParam(prefixCallBackDelUserFromGr, cbq.Data)
+		userID, groupID := convSToI[int64](data[0], 64), convSToI[int](data[1], 0)
+		msg, err = h.deleteUserFromGroup(cbq.From.ID, userID, groupID)
 	}
-
+	// TODO: Returning default message if all is nil
 	if err != nil {
 		return err
 	}
-	if res != nil {
-		h.response <- &MessageWithTime{res, timeStart}
-		return nil
-	}
-	return NoCallbackDataError
+	h.response <- MessageWithTime{Msg: msg, EditMesage: editMsg, WorkTime: timeStart}
+	return nil
 }
 
 func (h *Hub) isCommand(text string, msgInfo *tg.Message) (*tg.MessageConfig, error) {
@@ -176,14 +195,13 @@ func (h *Hub) isForwardMessage(msg *tg.Message) (*tg.MessageConfig, error) {
 
 	case isAddNewProductForward(text):
 		listName := parseNameListForAddProd(text)
-		// FIXME: function for getting listID put in addNewProduct()
-		listID, err := h.db.ProductList().GetListID(context.TODO(), listName)
-		if err != nil {
-			return nil, err
-		}
-		products := parseStringToProducts(msg.Text, listID)
 
-		res, err = h.addNewProduct(msg.Chat.ID, products, listName)
+		res, err = h.addNewProduct(msg.Chat.ID, msg.Text, listName)
+
+	case isEditListForward(text):
+		listName := parseListNameEditList(text)
+		indexToDelete := parseIndexEditProduct(msg.Text)
+		res, err = h.editProductList(msg.From.ID, listName, indexToDelete)
 
 	case isCreateNewGroupForward(text):
 		managerGroup := &store.GroupInfo{
@@ -211,11 +229,17 @@ func (h *Hub) isForwardMessage(msg *tg.Message) (*tg.MessageConfig, error) {
 	return nil, nil
 }
 
+func (h *Hub) editMessage(chatID int64, lastmsgDI int, text string) *tg.EditMessageTextConfig {
+	msg := tg.NewEditMessageText(chatID, lastmsgDI, text)
+	return &msg
+}
+
 func (h *Hub) createMessage(ChatId int64, text string) *tg.MessageConfig {
 	msgCongig := tg.NewMessage(ChatId, text)
 	return &msgCongig
 }
 
+// NOTE: Make my example
 func toLowerCase(s string) string {
 	return strings.ToLower(s)
 }

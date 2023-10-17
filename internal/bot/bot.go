@@ -20,7 +20,7 @@ const (
 type Bot struct {
 	timeOut int
 	offset  int
-	output  chan *MessageWithTime
+	output  chan MessageWithTime
 	client  *tgbotapi.BotAPI
 	logger  *slog.Logger
 	hub     manager.Manager
@@ -30,7 +30,7 @@ func New(client *tgbotapi.BotAPI, timeOut int, offset int) *Bot {
 	return &Bot{
 		timeOut: timeOut,
 		offset:  offset,
-		output:  make(chan *MessageWithTime, bufferMessages),
+		output:  make(chan MessageWithTime, bufferMessages),
 		client:  client,
 		logger:  slog.New(slog.NewTextHandler(os.Stdout, nil)),
 	}
@@ -110,11 +110,22 @@ func (b *Bot) MessageSender() error {
 	for {
 		select {
 		case msg := <-b.output:
+			if msg.Msg == nil && msg.EditMesage == nil {
+				b.logger.Error("response nil message, message can`t be send")
+				continue
+			}
 			go func() {
 				defer func() {
 					b.logger.Info(logDuractionResponse,
 						slog.Duration(" ", time.Now().Sub(msg.WorkTime)))
 				}()
+				if msg.EditMesage != nil {
+					if _, err := b.client.Send(msg.EditMesage); err != nil {
+						b.logger.Error("not sended edit message",
+							slog.String("error", err.Error()))
+					}
+					return
+				}
 				if _, err := b.client.Send(msg.Msg); err != nil {
 					b.logger.Error("not sended message",
 						slog.String("error", err.Error()))
