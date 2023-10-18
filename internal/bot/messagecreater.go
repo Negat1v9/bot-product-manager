@@ -28,6 +28,10 @@ func createMessageSuccessAddedProduct(p []string) string {
 	return string(s)
 }
 
+func createMessageUserRefusedOrder(refusedName string) string {
+	s := fmt.Sprintf(refusedUserMessage, refusedName)
+	return s
+}
 func createMessgeToInviteNewUser(ownerName, groupName string) string {
 	s := fmt.Sprintf(inviteUserMessage, ownerName, groupName)
 	return s

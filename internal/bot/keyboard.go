@@ -77,12 +77,11 @@ func createInlineGroupName(groups []store.GroupInfo) *tg.InlineKeyboardMarkup {
 }
 
 func createInlineGroupList(lists []store.ProductList, groupID int, isOwnerGroup bool) *tg.InlineKeyboardMarkup {
-	keyboard := tg.InlineKeyboardMarkup{}
+	var keyboard tg.InlineKeyboardMarkup
 	var button tg.InlineKeyboardButton
 	for _, list := range lists {
 		sListID := strconv.Itoa(*list.ID)
 		callBack := createCallBackFewParam(prefixCallBackListProduct, sListID, *list.Name)
-		// callBack := createCallBackListProducts(*list.ID, *list.Name)
 		button = tg.InlineKeyboardButton{Text: *list.Name, CallbackData: callBack}
 		keyboard.InlineKeyboard = append(keyboard.InlineKeyboard, []tg.InlineKeyboardButton{button})
 	}
@@ -106,10 +105,14 @@ func createInlineGroupActions(groupID int) []tg.InlineKeyboardButton {
 	return buttonRow
 }
 
-func createInlineDeleteUser(users []store.User, groupID int) *tg.InlineKeyboardMarkup {
+func createInlineDeleteUser(users []store.User, groupID int, ownerId int64) *tg.InlineKeyboardMarkup {
 	keyboard := &tg.InlineKeyboardMarkup{}
 	var button tg.InlineKeyboardButton
 	for _, user := range users {
+		// skip button for delete ownerGroup
+		if user.ChatID == ownerId {
+			continue
+		}
 		sUsID, sGrID := strconv.FormatInt(user.ChatID, 10), strconv.Itoa(groupID)
 		callBack := createCallBackFewParam(prefixCallBackDelUserFromGr, sUsID, sGrID)
 		// callBack := createCallBackDeleteUserGroup(sUsID, sGrID)

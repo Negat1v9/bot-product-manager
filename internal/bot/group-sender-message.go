@@ -37,3 +37,19 @@ func (h *Hub) sendInviteMessage(newUserName string, groupID int, ownerID int64) 
 	h.response <- MessageWithTime{Msg: msgForNewUser, WorkTime: time.Now()}
 	return nil
 }
+
+func (h *Hub) sendRufuseAnswerToOwner(groupID int, refusedName string) error {
+	start := time.Now()
+	groupInfo, err := h.db.ManagerGroup().ByGroupID(context.TODO(), groupID)
+	if err != nil {
+		return err
+	}
+	ownerUser, err := h.db.User().ByID(context.TODO(), groupInfo.OwnerID)
+	if err != nil {
+		return nil
+	}
+	text := createMessageUserRefusedOrder(refusedName)
+	msg := h.createMessage(ownerUser.ChatID, text)
+	h.response <- MessageWithTime{Msg: msg, WorkTime: start}
+	return nil
+}

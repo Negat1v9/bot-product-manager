@@ -53,6 +53,8 @@ func (h *Hub) MessageUpdate(msg *tg.Message, timeStart time.Time) (err error) {
 
 	}
 	if err != nil {
+		msg := h.createErrorMessaeg(msg.From.ID)
+		h.response <- MessageWithTime{Msg: msg, WorkTime: timeStart}
 		return err
 	}
 	if res != nil {
@@ -61,8 +63,8 @@ func (h *Hub) MessageUpdate(msg *tg.Message, timeStart time.Time) (err error) {
 	}
 	// send default message if user print something what we don`t know
 	h.response <- MessageWithTime{
-		EditMesage: h.cmdDefault(msg.From.ID, msg.MessageID-1),
-		WorkTime:   timeStart,
+		Msg:      h.cmdDefault(msg.From.ID),
+		WorkTime: timeStart,
 	}
 	return nil
 }
@@ -106,7 +108,7 @@ func (h *Hub) CallBackUpdate(cbq *tg.CallbackQuery, timeStart time.Time) error {
 		msg, err = h.createMessageCreateGroupList(cbq.From.ID, groupID)
 
 	case isCompliteProductList(cbq.Data):
-		listName := parseCallBackOneParam(prefixCreateGroupList, cbq.Data)
+		listName := parseCallBackOneParam(prefixCompliteList, cbq.Data)
 		msg, err = h.compliteProductList(cbq.From.ID, listName)
 
 	case isGetUsersForDelGroup(cbq.Data):
@@ -118,16 +120,16 @@ func (h *Hub) CallBackUpdate(cbq *tg.CallbackQuery, timeStart time.Time) error {
 		data := parseCallBackOneParam(prefixAddUserGroup, cbq.Data)
 		groupID := convSToI[int](data, 0)
 		msg, err = h.createMessageForInviteUser(cbq.From.ID, groupID)
-
+		// TODO: Make invite and refuse message as edit type, now its not working
 	case isUserReadyInvite(cbq.Data):
 		data := parseCallBackFewParam(prefixCallBackInsertUserGroup, cbq.Data)
 		userID, groupID := convSToI[int64](data[0], 64), convSToI[int](data[1], 0)
-		editMsg, err = h.userReadyJoinGroup(userID, groupID, cbq.Message.MessageID)
+		msg, err = h.userReadyJoinGroup(userID, groupID)
 
 	case isUserRefuseInvite(cbq.Data):
 		data := parseCallBackFewParam(prefixCallBackRefuseUserGroup, cbq.Data)
-		userID := convSToI[int64](data[0], 64)
-		editMsg = h.userRefuseJoinGroup(userID, cbq.Message.MessageID)
+		userID, groupID := convSToI[int64](data[0], 64), convSToI[int](data[1], 0)
+		msg, err = h.userRefuseJoinGroup(userID, cbq.From.UserName, groupID)
 
 	case isDeleteUserFromGroup(cbq.Data):
 		data := parseCallBackFewParam(prefixCallBackDelUserFromGr, cbq.Data)
@@ -136,6 +138,8 @@ func (h *Hub) CallBackUpdate(cbq *tg.CallbackQuery, timeStart time.Time) error {
 	}
 	// TODO: Returning default message if all is nil
 	if err != nil {
+		msg := h.createErrorMessaeg(cbq.From.ID)
+		h.response <- MessageWithTime{Msg: msg, WorkTime: timeStart}
 		return err
 	}
 	h.response <- MessageWithTime{Msg: msg, EditMesage: editMsg, WorkTime: timeStart}
@@ -145,7 +149,7 @@ func (h *Hub) CallBackUpdate(cbq *tg.CallbackQuery, timeStart time.Time) error {
 func (h *Hub) isCommand(text string, msgInfo *tg.Message) (*tg.MessageConfig, error) {
 	switch text {
 	case "/start":
-		msg, err := h.cmdStrart(msgInfo.From.UserName, msgInfo.From.ID)
+		msg, err := h.cmdStrart(msgInfo.From.ID, msgInfo.From.UserName)
 		if err != nil {
 			return nil, err
 		}
@@ -231,12 +235,18 @@ func (h *Hub) isForwardMessage(msg *tg.Message) (*tg.MessageConfig, error) {
 
 func (h *Hub) editMessage(chatID int64, lastmsgDI int, text string) *tg.EditMessageTextConfig {
 	msg := tg.NewEditMessageText(chatID, lastmsgDI, text)
+
 	return &msg
 }
 
 func (h *Hub) createMessage(ChatId int64, text string) *tg.MessageConfig {
 	msgCongig := tg.NewMessage(ChatId, text)
 	return &msgCongig
+}
+
+func (h *Hub) createErrorMessaeg(chatID int64) *tg.MessageConfig {
+	msg := tg.NewMessage(chatID, errorMessage)
+	return &msg
 }
 
 // NOTE: Make my example

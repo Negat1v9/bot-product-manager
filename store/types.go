@@ -13,6 +13,7 @@ type Store interface {
 
 type UserRepo interface {
 	Add(ctx context.Context, u *User) error
+	ByID(ctx context.Context, ID int64) (*User, error)
 	ByUserName(ctx context.Context, userName string) (*User, error)
 	IsExist(ctx context.Context, u *User) (bool, error)
 }

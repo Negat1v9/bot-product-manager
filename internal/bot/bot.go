@@ -67,6 +67,7 @@ func (b *Bot) startPooling(updates tgbotapi.UpdatesChannel) error {
 	for update := range updates {
 		// Message update
 		if update.Message != nil {
+			b.logger.Info("Get messageid", slog.Int("ID", update.Message.MessageID))
 			// manage cmd or message to hub
 			go func(msg *tgbotapi.Message) {
 				start := time.Now()
@@ -77,15 +78,12 @@ func (b *Bot) startPooling(updates tgbotapi.UpdatesChannel) error {
 						slog.String("error", err.Error()))
 				}
 				return
-				// if err = b.sendMessage(res); err != nil {
-				// 	b.logger.Error("not sended message",
-				// 		slog.String("error", err.Error()))
-				// }
-				// b.logger.Info("time message routing", slog.Duration("time", time.Now().Sub(s)))
+
 			}(update.Message)
 			continue
 		}
 		if update.CallbackQuery != nil {
+			b.logger.Info("Get messageid", slog.Int("ID", update.CallbackQuery.Message.MessageID))
 			go func(c *tgbotapi.CallbackQuery) {
 				start := time.Now()
 				err := b.hub.CallBackUpdate(c, start)
@@ -95,10 +93,6 @@ func (b *Bot) startPooling(updates tgbotapi.UpdatesChannel) error {
 						slog.String("error", err.Error()))
 				}
 
-				// if err = b.sendMessage(res); err != nil {
-
-				// }
-				// b.logger.Info("time message routing", slog.Duration("time", time.Now().Sub(s)))
 			}(update.CallbackQuery)
 		}
 		continue

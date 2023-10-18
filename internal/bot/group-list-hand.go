@@ -8,7 +8,6 @@ import (
 )
 
 func (h *Hub) GetGroupLists(UserID int64, lastMsgID, groupID int) (editMsg *tg.EditMessageTextConfig, err error) {
-	var isOwnerGroup = false
 	groupList, err := h.db.ManagerGroup().AllByGroupID(context.TODO(), groupID)
 	if err != nil {
 		if err == store.NoRowListOfProductError {
@@ -19,9 +18,8 @@ func (h *Hub) GetGroupLists(UserID int64, lastMsgID, groupID int) (editMsg *tg.E
 	} else {
 		editMsg = h.editMessage(UserID, lastMsgID, "Group List:")
 	}
-	if UserID == groupList.GroupOwnerID {
-		isOwnerGroup = true
-	}
+	isOwnerGroup := UserID == groupList.GroupOwnerID
+
 	editMsg.ReplyMarkup = createInlineGroupList(groupList.PruductLists, groupID, isOwnerGroup)
 	return editMsg, nil
 }
@@ -58,15 +56,9 @@ func (h *Hub) getUserForDeleteFrGr(ChatID int64, lastMsgID, groupID int) (*tg.Ed
 	if err != nil {
 		return nil, err
 	}
-	// Info: if user at group lowwer them 2, means at group only owner
-	if len(*groupInfo.UsersInfo) < 2 {
-		editMsg := h.editMessage(ChatID, lastMsgID, emptyUserInGroup)
-		// msg = h.createMessage(ChatID, emptyUserInGroup)
-		return editMsg, nil
-	}
+
 	editMsg := h.editMessage(ChatID, lastMsgID, "Choise user from:"+groupInfo.GroupName)
-	// msg = h.createMessage(ChatID, "Choise user from:"+groupInfo.GroupName)
-	editMsg.ReplyMarkup = createInlineDeleteUser(*groupInfo.UsersInfo, groupID)
+	editMsg.ReplyMarkup = createInlineDeleteUser(*groupInfo.UsersInfo, groupID, groupInfo.OwnerID)
 	return editMsg, nil
 }
 

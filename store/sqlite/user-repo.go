@@ -22,6 +22,19 @@ func (r *UserRepo) Add(ctx context.Context, u *store.User) error {
 	return nil
 }
 
+func (r *UserRepo) ByID(ctx context.Context, ID int64) (*store.User, error) {
+	u := &store.User{}
+	err := r.storage.db.QueryRowContext(ctx,
+		`SELECT id, name 
+			FROM users
+		WHERE id=?;`,
+	).Scan(&u.ChatID, u.UserName)
+	if err != nil {
+		return nil, err
+	}
+	return u, nil
+}
+
 func (r *UserRepo) ByUserName(ctx context.Context, userName string) (*store.User, error) {
 	u := &store.User{}
 	err := r.storage.db.QueryRowContext(ctx,

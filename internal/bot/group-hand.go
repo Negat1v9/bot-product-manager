@@ -64,7 +64,7 @@ func (h *Hub) inviteNewUser(ChatID int64, newUserName, groupName string) (*tg.Me
 	return msg, nil
 }
 
-func (h *Hub) userReadyJoinGroup(newUserID int64, groupID, lastMsgID int) (*tg.EditMessageTextConfig, error) {
+func (h *Hub) userReadyJoinGroup(newUserID int64, groupID int) (*tg.MessageConfig, error) {
 	g := &store.Group{
 		UserID:  newUserID,
 		GroupID: groupID,
@@ -73,11 +73,14 @@ func (h *Hub) userReadyJoinGroup(newUserID int64, groupID, lastMsgID int) (*tg.E
 	if err != nil {
 		return nil, err
 	}
-	editMsg := h.editMessage(newUserID, lastMsgID, userInvitedInGroupMessage)
+	editMsg := h.createMessage(newUserID, userInvitedInGroupMessage)
 	return editMsg, nil
 }
 
-func (h *Hub) userRefuseJoinGroup(userID int64, lastMsgID int) *tg.EditMessageTextConfig {
-	editMsg := h.editMessage(userID, lastMsgID, refuseJoinGroupMessage)
-	return editMsg
+func (h *Hub) userRefuseJoinGroup(userID int64, userName string, groupID int) (*tg.MessageConfig, error) {
+	if err := h.sendRufuseAnswerToOwner(groupID, userName); err != nil {
+		return nil, err
+	}
+	editMsg := h.createMessage(userID, refuseJoinGroupMessage)
+	return editMsg, nil
 }

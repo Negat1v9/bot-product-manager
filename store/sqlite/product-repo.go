@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"fmt"
 
 	"github.com/Negat1v9/telegram-bot-orders/store"
 )
@@ -31,7 +30,7 @@ func (r *ProductRepo) Create(ctx context.Context, listID int) error {
 
 func (r *ProductRepo) Add(ctx context.Context, p store.Product) error {
 	productsString, err := r.ConvertProductString(p.Products)
-	fmt.Println("product-repo", productsString)
+
 	if err != nil {
 		return err
 	}
@@ -45,9 +44,9 @@ func (r *ProductRepo) Add(ctx context.Context, p store.Product) error {
 	if err != nil {
 		return err
 	}
-	if id == nil {
-		fmt.Println("products update was not")
-	}
+	// if id == nil {
+	// 	return
+	// }
 	return nil
 }
 
