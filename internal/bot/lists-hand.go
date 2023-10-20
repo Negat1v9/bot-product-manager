@@ -25,19 +25,27 @@ func (h *Hub) createList(ChatID int64, list *store.ProductList) (*tg.MessageConf
 }
 
 // Info: Select all users lists and create inline keyboard with its
-func (h *Hub) getListName(UserID, ChatID int64) (msg *tg.MessageConfig, err error) {
-	lists, err := h.db.ProductList().GetAll(context.TODO(), int(UserID))
+func (h *Hub) getListName(chatID int64, lastMsgID int) (editMsg *tg.EditMessageTextConfig, err error) {
+	lists, err := h.db.ProductList().GetAll(context.TODO(), int(chatID))
 	if err != nil {
 		if err == store.NoRowListOfProductError {
-			msg = h.createMessage(ChatID, "Nothing is found. Create Youre First list!")
-			return msg, nil
+			editMsg = h.editMessage(chatID, lastMsgID, "Nothing is found. Create Youre First list!")
+			// editMsg = h.createMessage(chatID, "Nothing is found. Create Youre First list!")
+			return editMsg, nil
 		}
 		return nil, err
 	}
 	keyboard := createListProductInline(lists)
-	msg = h.createMessage(ChatID, "List of Product-lists")
-	msg.ReplyMarkup = keyboard
-	return msg, nil
+	editMsg = h.editMessage(chatID, lastMsgID, "List of Product-lists")
+	// editMsg = h.createMessage(chatID, "List of Product-lists")
+	editMsg.ReplyMarkup = &keyboard
+	return editMsg, nil
+}
+
+func (h *Hub) getChoiceLists(chatID int64) *tg.MessageConfig {
+	msg := h.createMessage(chatID, "select list")
+	msg.ReplyMarkup = createInlineGetChoiceList()
+	return msg
 }
 
 func (h *Hub) getProductList(ChatID int64, lastMsgID, listID int, listName string) (*tg.EditMessageTextConfig, error) {

@@ -84,6 +84,12 @@ func (h *Hub) CallBackUpdate(cbq *tg.CallbackQuery, timeStart time.Time) error {
 	var editMsg *tg.EditMessageTextConfig
 	var err error
 	switch {
+	// TODO:
+	case isUserChoiceLists(cbq.Data):
+		editMsg, err = h.getListName(cbq.From.ID, cbq.Message.MessageID)
+	// editMsg, err = h.getListName()
+	case isUserChoiceGroupLists(cbq.Data):
+		editMsg, err = h.GetAllUserGroup(cbq.From.ID, cbq.Message.MessageID)
 	case isGetProductList(cbq.Data):
 		data := parseCallBackFewParam(prefixCallBackListProduct, cbq.Data)
 		listID, listName := convSToI[int](data[0], 0), data[1]
@@ -166,18 +172,19 @@ func (h *Hub) isMessage(text string, msgInfo *tg.Message) (*tg.MessageConfig, er
 	case isCreateList(text):
 		msg := h.answerToCreateList(msgInfo.From.ID)
 		return msg, nil
-	case isSelectUserList(text):
-		msg, err := h.getListName(msgInfo.From.ID, msgInfo.Chat.ID)
-		if err != nil {
-			return nil, err
-		}
+	case isSelectList(text):
+		msg := h.getChoiceLists(msgInfo.From.ID)
+		// msg, err := h.getListName(msgInfo.From.ID, msgInfo.Chat.ID)
+		// if err != nil {
+		// return nil, err
+		// }
 		return msg, nil
-	case isGetUserGroup(text):
-		msg, err := h.GetAllUserGroup(msgInfo.Chat.ID, msgInfo.From.ID)
-		if err != nil {
-			return nil, err
-		}
-		return msg, nil
+	// case isGetUserGroup(text):
+	// 	msg, err := h.GetAllUserGroup(msgInfo.Chat.ID, msgInfo.From.ID)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	return msg, nil
 	case isCreateGroup(text):
 		msg := h.createMessageForNewGroup(msgInfo.Chat.ID)
 		return msg, nil

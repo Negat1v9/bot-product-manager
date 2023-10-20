@@ -13,6 +13,7 @@ import (
 )
 
 const (
+	timeForSkipUpdates   = 5
 	bufferMessages       = 10
 	logDuractionResponse = "time create and send response"
 )
@@ -64,6 +65,7 @@ func (b *Bot) Start(dbURL string) error {
 }
 
 func (b *Bot) startPooling(updates tgbotapi.UpdatesChannel) error {
+	b.skipLastUpdates(updates)
 	for update := range updates {
 		// Message update
 		if update.Message != nil {
@@ -130,6 +132,25 @@ func (b *Bot) MessageSender() error {
 			continue
 		}
 	}
+}
+func (b *Bot) skipLastUpdates(updates tgbotapi.UpdatesChannel) {
+	timer := time.NewTicker(time.Second * timeForSkipUpdates)
+	end := make(chan struct{})
+	go func() {
+		count := 0
+		for {
+			select {
+			case <-updates:
+				b.logger.Info("skip update", slog.IntValue(count))
+				count++
+			case <-timer.C:
+				end <- struct{}{}
+				return
+			}
+		}
+	}()
+	<-end
+	b.logger.Info("Skiping end")
 }
 func initDB(URL string) (*sql.DB, error) {
 	db, err := sql.Open("sqlite3", URL)

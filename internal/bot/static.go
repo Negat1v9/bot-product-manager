@@ -13,14 +13,16 @@ var botCommands []tgbotapi.BotCommand = []tgbotapi.BotCommand{
 	},
 }
 var (
-	buttonListList     = "my-list"
-	buttonCreateList   = "new-list"
-	buttonGetUserGroup = "get-group"
-	buttonNewGroup     = "create-group"
+	buttonList       = "lists"
+	buttonCreateList = "new-list"
+	// buttonGetUserGroup = "get-group"
+	buttonNewGroup = "create-group"
 )
 
 // prefix for callback initilization
 var (
+	prefixGetUserList             = "getlist"
+	prefixGetGroupLists           = "getGroups"
 	prefixCallBackListProduct     = "IDNAME"
 	prefixAddProductList          = "add-"
 	prefixCompliteList            = "compl-"
@@ -46,7 +48,10 @@ var (
 
 // Messages
 var (
-	cmdHelpMessage = "Hi, friend. Let me tell you a little about myself:\nI'm a bot that was made to automate the creation of lists in a telegram, you can:\n1. Create personal lists and add things to them.\n🔥2. Create group lists that can be edited by all its participants. 🌚"
+	choiceUserList  = "your lists"
+	choiceGroupList = "group lists"
+	cmdStart        = "Hi friend, I'm a bot that is designed to create lists 📋 and execute them.\n\nTo find out more click /help. 💭️\n\nTo create your first list, click the ⏩ new-list ⏪ button"
+	cmdHelpMessage  = "Hi, friend. Let me tell you a little about myself:\nI'm a bot that was made to automate the creation of lists in a telegram, you can:\n\n1. Create personal lists and add things to them.🔥\n\n2. Create group lists that can be edited by all its participants. 🌚"
 
 	refuseJoinGroupMessage    = "It's a shame, but oh well, keep creating lists alone :("
 	groupIsCreatesMessage     = "new group is created"

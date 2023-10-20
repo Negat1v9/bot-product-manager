@@ -29,18 +29,20 @@ func (h *Hub) createNewGroup(ChatID int64, managerGroup *store.GroupInfo) (*tg.M
 	return msg, nil
 }
 
-func (h *Hub) GetAllUserGroup(ChatID, UserID int64) (*tg.MessageConfig, error) {
-	groups, err := h.db.ManagerGroup().UserGroup(context.TODO(), int(UserID))
+func (h *Hub) GetAllUserGroup(chatID int64, lastMsgID int) (*tg.EditMessageTextConfig, error) {
+	groups, err := h.db.ManagerGroup().UserGroup(context.TODO(), int(chatID))
 	if err != nil {
 		if err == store.NoUserGroupError {
-			msg := h.createMessage(ChatID, err.Error())
-			return msg, nil
+			editMsg := h.editMessage(chatID, lastMsgID, err.Error())
+			// editMsg := h.createMessage(ChatID, err.Error())
+			return editMsg, nil
 		}
 		return nil, err
 	}
-	msg := h.createMessage(ChatID, `Groups:`)
-	msg.ReplyMarkup = createInlineGroupName(groups)
-	return msg, nil
+	editMsg := h.editMessage(chatID, lastMsgID, "Groups:")
+	// msg := h.createMessage(chatID, )
+	editMsg.ReplyMarkup = createInlineGroupName(groups)
+	return editMsg, nil
 }
 
 func (h *Hub) inviteNewUser(ChatID int64, newUserName, groupName string) (*tg.MessageConfig, error) {

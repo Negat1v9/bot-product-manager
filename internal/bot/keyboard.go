@@ -11,23 +11,35 @@ import (
 var (
 	menuKeyboard = tg.NewReplyKeyboard(
 		tg.NewKeyboardButtonRow(
-			tg.NewKeyboardButton(buttonListList),
+			tg.NewKeyboardButton(buttonList),
 			tg.NewKeyboardButton(buttonCreateList),
 			tg.NewKeyboardButton(buttonNewGroup),
-			tg.NewKeyboardButton(buttonGetUserGroup),
+			// tg.NewKeyboardButton(buttonGetUserGroup),
 		),
 	)
 )
 
-// Info: creater keyboard on bottom for list products
+// Info: inline keyboard for user choice list or group-list
+func createInlineGetChoiceList() tg.InlineKeyboardMarkup {
+	kb := tg.NewInlineKeyboardMarkup(
+		tg.NewInlineKeyboardRow(
+			tg.NewInlineKeyboardButtonData(
+				choiceUserList, prefixGetUserList)),
+		tg.NewInlineKeyboardRow(
+			tg.NewInlineKeyboardButtonData(
+				choiceGroupList, prefixGetGroupLists,
+			)),
+	)
+	return kb
+}
 
+// Info: creater keyboard on bottom for list products
 func createListProductInline(lists []store.ProductList) tg.InlineKeyboardMarkup {
 	var listOfProductList tg.InlineKeyboardMarkup
 	var button tg.InlineKeyboardButton
 	for _, list := range lists {
 		stID := strconv.Itoa(*list.ID)
 		callBack := createCallBackFewParam(prefixCallBackListProduct, stID, *list.Name)
-		// callBack := createCallBackListProducts(*list.ID, *list.Name)
 		button = tg.InlineKeyboardButton{Text: *list.Name, CallbackData: callBack}
 		buttonRow := []tg.InlineKeyboardButton{button}
 		listOfProductList.InlineKeyboard = append(listOfProductList.InlineKeyboard, buttonRow)
@@ -52,7 +64,6 @@ func createProductsInline(listName string) *tg.InlineKeyboardMarkup {
 func createInlineGetCurList(listID int, listName string) tg.InlineKeyboardMarkup {
 	sListID := strconv.Itoa(listID)
 	data := createCallBackFewParam(prefixCallBackListProduct, sListID, listName)
-	// data := createCallBackListProducts(listID, listName)
 	keyboard := tg.NewInlineKeyboardMarkup(
 		tg.NewInlineKeyboardRow(
 			tg.NewInlineKeyboardButtonData("View list", *data),
@@ -67,7 +78,6 @@ func createInlineGroupName(groups []store.GroupInfo) *tg.InlineKeyboardMarkup {
 	for _, group := range groups {
 		sGroupID := strconv.Itoa(group.ID)
 		callBack := createCallBackOneParam(prefixCallBackListGroup, sGroupID)
-		// callBack := createCallBackGroupLists(group.ID)
 		groupButton = tg.InlineKeyboardButton{Text: group.GroupName, CallbackData: callBack}
 		keyboard.InlineKeyboard = append(keyboard.InlineKeyboard,
 			[]tg.InlineKeyboardButton{groupButton},
@@ -115,7 +125,6 @@ func createInlineDeleteUser(users []store.User, groupID int, ownerId int64) *tg.
 		}
 		sUsID, sGrID := strconv.FormatInt(user.ChatID, 10), strconv.Itoa(groupID)
 		callBack := createCallBackFewParam(prefixCallBackDelUserFromGr, sUsID, sGrID)
-		// callBack := createCallBackDeleteUserGroup(sUsID, sGrID)
 		button = tg.NewInlineKeyboardButtonData(user.UserName, *callBack)
 		keyboard.InlineKeyboard = append(keyboard.InlineKeyboard,
 			[]tg.InlineKeyboardButton{button})

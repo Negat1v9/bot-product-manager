@@ -24,14 +24,21 @@ func isGetProductList(s string) bool {
 	return strings.HasPrefix(s, prefixCallBackListProduct)
 }
 
-func isSelectUserList(s string) bool {
-	return strings.EqualFold(s, buttonListList)
+func isSelectList(s string) bool {
+	return strings.EqualFold(s, buttonList)
 }
 
 // PRODUCTS FILTERS
 
 func isAddNewProductForward(s string) bool {
 	return strings.HasPrefix(s, addNewProductMessage)
+}
+
+func isUserChoiceLists(s string) bool {
+	return strings.HasPrefix(s, prefixGetUserList)
+}
+func isUserChoiceGroupLists(s string) bool {
+	return strings.HasPrefix(s, prefixGetGroupLists)
 }
 
 func isAddNewProduct(s string) bool {
@@ -63,9 +70,9 @@ func isGetUsersForDelGroup(s string) bool {
 	return strings.HasPrefix(s, prefixGetUserToDelete)
 }
 
-func isGetUserGroup(s string) bool {
-	return strings.EqualFold(s, buttonGetUserGroup)
-}
+// func isGetUserGroup(s string) bool {
+// 	return strings.EqualFold(s, buttonGetUserGroup)
+// }
 
 func isCreateGroupList(s string) bool {
 	return strings.HasPrefix(s, prefixCreateGroupList)

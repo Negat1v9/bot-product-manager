@@ -56,7 +56,10 @@ func (h *Hub) getUserForDeleteFrGr(ChatID int64, lastMsgID, groupID int) (*tg.Ed
 	if err != nil {
 		return nil, err
 	}
-
+	if len(*groupInfo.UsersInfo) < 2 {
+		editMsg := h.editMessage(ChatID, lastMsgID, emptyUserInGroup)
+		return editMsg, nil
+	}
 	editMsg := h.editMessage(ChatID, lastMsgID, "Choise user from:"+groupInfo.GroupName)
 	editMsg.ReplyMarkup = createInlineDeleteUser(*groupInfo.UsersInfo, groupID, groupInfo.OwnerID)
 	return editMsg, nil

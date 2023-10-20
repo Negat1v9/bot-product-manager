@@ -27,7 +27,7 @@ func (h *Hub) cmdStrart(chatID int64, userName string) (*tgbotapi.MessageConfig,
 		return nil, err
 	}
 	// create msg
-	msg := h.createMessage(chatID, "Hello from start command!")
+	msg := h.createMessage(chatID, cmdStart)
 	msg.ReplyMarkup = menuKeyboard
 	return msg, nil
 }
