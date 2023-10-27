@@ -141,7 +141,7 @@ func (b *Bot) skipLastUpdates(updates tgbotapi.UpdatesChannel) {
 		for {
 			select {
 			case <-updates:
-				b.logger.Info("skip update", slog.IntValue(count))
+				b.logger.Info("skip update", slog.Int("count", count))
 				count++
 			case <-timer.C:
 				end <- struct{}{}

@@ -11,10 +11,9 @@ import (
 var (
 	menuKeyboard = tg.NewReplyKeyboard(
 		tg.NewKeyboardButtonRow(
-			tg.NewKeyboardButton(buttonList),
+			// tg.NewKeyboardButton(buttonList),
 			tg.NewKeyboardButton(buttonCreateList),
 			tg.NewKeyboardButton(buttonNewGroup),
-			// tg.NewKeyboardButton(buttonGetUserGroup),
 		),
 	)
 )
@@ -57,6 +56,11 @@ func createProductsInline(listName string) *tg.InlineKeyboardMarkup {
 			tg.NewInlineKeyboardButtonData(
 				"complite", *createCallBackOneParam(prefixCompliteList, listName)),
 		),
+		tg.NewInlineKeyboardRow(
+			tg.NewInlineKeyboardButtonData(
+				"🔓 merge with group", *createCallBackOneParam(prefixToMergeListGroup, listName),
+			),
+		),
 	)
 	return &keyboard
 }
@@ -72,12 +76,41 @@ func createInlineGetCurList(listID int, listName string) tg.InlineKeyboardMarkup
 	return keyboard
 }
 
+func createInlineGetCurGroup(groupID int) *tg.InlineKeyboardMarkup {
+	sGroupID := strconv.Itoa(groupID)
+	data := createCallBackOneParam(prefixCallBackListGroup, sGroupID)
+	kb := tg.NewInlineKeyboardMarkup(
+		tg.NewInlineKeyboardRow(
+			tg.NewInlineKeyboardButtonData(
+				"See the group? 🔍", *data,
+			),
+		),
+	)
+	return &kb
+}
+
 func createInlineGroupName(groups []store.GroupInfo) *tg.InlineKeyboardMarkup {
 	var keyboard = tg.InlineKeyboardMarkup{}
 	var groupButton tg.InlineKeyboardButton
 	for _, group := range groups {
 		sGroupID := strconv.Itoa(group.ID)
 		callBack := createCallBackOneParam(prefixCallBackListGroup, sGroupID)
+		groupButton = tg.InlineKeyboardButton{Text: group.GroupName, CallbackData: callBack}
+		keyboard.InlineKeyboard = append(keyboard.InlineKeyboard,
+			[]tg.InlineKeyboardButton{groupButton},
+		)
+	}
+	return &keyboard
+}
+
+// prefix-GroupID-ListID
+func createInlineMergeListGroup(groups []store.GroupInfo, listID int) *tg.InlineKeyboardMarkup {
+	var keyboard = tg.InlineKeyboardMarkup{}
+	var groupButton tg.InlineKeyboardButton
+	sListID := strconv.Itoa(listID)
+	for _, group := range groups {
+		sGroupID := strconv.Itoa(group.ID)
+		callBack := createCallBackFewParam(prefixMergeListWithGroup, sGroupID, sListID)
 		groupButton = tg.InlineKeyboardButton{Text: group.GroupName, CallbackData: callBack}
 		keyboard.InlineKeyboard = append(keyboard.InlineKeyboard,
 			[]tg.InlineKeyboardButton{groupButton},

@@ -23,7 +23,7 @@ type ManagerGroupRepo interface {
 	ByGroupName(ctx context.Context, groupName string) (*GroupInfo, error)
 	ByGroupID(ctx context.Context, groupID int) (*GroupInfo, error)
 	AllByGroupID(ctx context.Context, groupID int) (*GroupList, error)
-	UserGroup(ctx context.Context, userID int) ([]GroupInfo, error)
+	UserGroup(ctx context.Context, userID int64) ([]GroupInfo, error)
 	InfoGroup(ctx context.Context, groupID int) (*GroupInfo, error)
 }
 
@@ -35,9 +35,10 @@ type GroupRepo interface {
 
 // NOTE: Merge ProductList and Product Repositories
 type ProductListRepo interface {
+	MergeListGroup(ctx context.Context, listID, groupID int) error
 	Create(ctx context.Context, p *ProductList) error
 	GetListID(ctx context.Context, listName string) (int, error)
-	GetAll(ctx context.Context, UserID int) ([]ProductList, error)
+	GetAll(ctx context.Context, UserID int64) ([]ProductList, error)
 	Delete(ctx context.Context, listID int) error
 }
 

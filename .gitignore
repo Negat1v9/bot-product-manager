@@ -5,3 +5,5 @@
 /database.db
 /Makefile
 /README.md
+/Dockerfile
+/docker-compose.yaml

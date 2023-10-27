@@ -136,7 +136,7 @@ func (r *ManagerGroupRepo) InfoGroup(ctx context.Context, groupID int) (*store.G
 
 // InfoGroupByName
 // FIXME: move to group-repository
-func (r *ManagerGroupRepo) UserGroup(ctx context.Context, userID int) ([]store.GroupInfo, error) {
+func (r *ManagerGroupRepo) UserGroup(ctx context.Context, userID int64) ([]store.GroupInfo, error) {
 	rows, err := r.storage.db.QueryContext(ctx,
 		`SELECT group_info.id, group_info.group_name, group_info.owner_id
 		FROM user_group 

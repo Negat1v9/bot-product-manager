@@ -8,15 +8,17 @@ var botCommands []tgbotapi.BotCommand = []tgbotapi.BotCommand{
 		Description: "start",
 	},
 	{
+		Command:     "/lists",
+		Description: "receive all lists",
+	},
+	{
 		Command:     "/help",
 		Description: "get info",
 	},
 }
 var (
-	buttonList       = "lists"
 	buttonCreateList = "new-list"
-	// buttonGetUserGroup = "get-group"
-	buttonNewGroup = "create-group"
+	buttonNewGroup   = "create-group"
 )
 
 // prefix for callback initilization
@@ -34,6 +36,8 @@ var (
 	prefixCallBackDelUserFromGr   = "DelUsIDGrID"
 	prefixCallBackInsertUserGroup = "insertInGroup"
 	prefixCallBackRefuseUserGroup = "refuseInGroup"
+	prefixToMergeListGroup        = "toMerge-"
+	prefixMergeListWithGroup      = "mergeListGrIDListID-"
 )
 
 // forward messages drafts
@@ -48,10 +52,11 @@ var (
 
 // Messages
 var (
-	choiceUserList  = "your lists"
-	choiceGroupList = "group lists"
-	cmdStart        = "Hi friend, I'm a bot that is designed to create lists 📋 and execute them.\n\nTo find out more click /help. 💭️\n\nTo create your first list, click the ⏩ new-list ⏪ button"
-	cmdHelpMessage  = "Hi, friend. Let me tell you a little about myself:\nI'm a bot that was made to automate the creation of lists in a telegram, you can:\n\n1. Create personal lists and add things to them.🔥\n\n2. Create group lists that can be edited by all its participants. 🌚"
+	choiceUserList        = "your lists"
+	choiceGroupList       = "group lists"
+	choiceWhatTypeListMsg = "Select what type of lists you want to receive\n\nYou can:\nSelect lists created for you for your self ☞ 'youre list'\n\nSelect lists created in the group ☞ 'group lists'"
+	cmdStart              = "Hi friend, I'm a bot that is designed to create lists 📋 and execute them.\n\nTo find out more click /help. 💭️\n\nTo create your first list, click the ⏩ new-list ⏪ button"
+	cmdHelpMessage        = "Hi, friend. Let me tell you a little about myself:\nI'm a bot that was made to automate the creation of lists in a telegram, you can:\n\n1. Create personal lists and add things to them.🔥\n\n2. Create group lists that can be edited by all its participants. 🌚"
 
 	refuseJoinGroupMessage    = "It's a shame, but oh well, keep creating lists alone :("
 	groupIsCreatesMessage     = "new group is created"
@@ -66,5 +71,7 @@ var (
 	inviteSendMessage         = "Invitation sent"
 	joinNewUserAtBotMessage   = "💥Youre friend sent you this message because he wants to invite you to a group where you can create lists together and carry them out.\nGo @golang_home_prj_bot to take advantage of it.❤️‍🔥"
 	userInvitedInGroupMessage = "Congratulations, you joined the group"
+	choiceWhatGroupMerge      = "Select the group you would like to connect your list with"
+	successMergeListGroupMgs  = "✅ The list was successfully added to the group."
 	errorMessage              = "Sorry, something seems to have gone wrong. Try later. "
 )

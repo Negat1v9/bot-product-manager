@@ -37,7 +37,7 @@ func (r *ProductListRepo) GetListID(ctx context.Context, listName string) (int, 
 	return id, nil
 }
 
-func (r *ProductListRepo) GetAll(ctx context.Context, userID int) ([]store.ProductList, error) {
+func (r *ProductListRepo) GetAll(ctx context.Context, userID int64) ([]store.ProductList, error) {
 	lists := []store.ProductList{}
 	row, err := r.storage.db.QueryContext(ctx,
 		`SELECT product_list.id, product_list.owner_id, product_list.group_id, product_list.name
@@ -58,6 +58,20 @@ func (r *ProductListRepo) GetAll(ctx context.Context, userID int) ([]store.Produ
 		return nil, store.NoRowListOfProductError
 	}
 	return lists, nil
+}
+
+func (r *ProductListRepo) MergeListGroup(ctx context.Context, listID, groupID int) error {
+	_, err := r.storage.db.ExecContext(ctx,
+		`UPDATE product_list
+			SET group_id=?
+		WHERE product_list.id=?;`,
+		groupID,
+		listID,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // delete full list with all product inside

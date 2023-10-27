@@ -30,7 +30,7 @@ func (h *Hub) createNewGroup(ChatID int64, managerGroup *store.GroupInfo) (*tg.M
 }
 
 func (h *Hub) GetAllUserGroup(chatID int64, lastMsgID int) (*tg.EditMessageTextConfig, error) {
-	groups, err := h.db.ManagerGroup().UserGroup(context.TODO(), int(chatID))
+	groups, err := h.db.ManagerGroup().UserGroup(context.TODO(), chatID)
 	if err != nil {
 		if err == store.NoUserGroupError {
 			editMsg := h.editMessage(chatID, lastMsgID, err.Error())

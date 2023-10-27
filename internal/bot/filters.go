@@ -24,9 +24,9 @@ func isGetProductList(s string) bool {
 	return strings.HasPrefix(s, prefixCallBackListProduct)
 }
 
-func isSelectList(s string) bool {
-	return strings.EqualFold(s, buttonList)
-}
+// func isSelectList(s string) bool {
+// 	return strings.EqualFold(s, buttonList)
+// }
 
 // PRODUCTS FILTERS
 
@@ -57,6 +57,16 @@ func isEditListForward(s string) bool {
 	return strings.HasPrefix(s, answerEditListMessage)
 }
 
+// Info: is get group to merge list
+func isWantMergeList(s string) bool {
+	return strings.HasPrefix(s, prefixToMergeListGroup)
+}
+
+// Info: is push button with name group
+func isMergeListGroup(s string) bool {
+	return strings.HasPrefix(s, prefixMergeListWithGroup)
+}
+
 // GROUP FILTERS
 func isCreateGroup(s string) bool {
 	return strings.EqualFold(s, buttonNewGroup)
@@ -69,10 +79,6 @@ func isAddNewUserGroup(s string) bool {
 func isGetUsersForDelGroup(s string) bool {
 	return strings.HasPrefix(s, prefixGetUserToDelete)
 }
-
-// func isGetUserGroup(s string) bool {
-// 	return strings.EqualFold(s, buttonGetUserGroup)
-// }
 
 func isCreateGroupList(s string) bool {
 	return strings.HasPrefix(s, prefixCreateGroupList)

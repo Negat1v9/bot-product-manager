@@ -7,6 +7,7 @@ import (
 	tg "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
+// Info: Send edit message with all current group lists
 func (h *Hub) GetGroupLists(UserID int64, lastMsgID, groupID int) (editMsg *tg.EditMessageTextConfig, err error) {
 	groupList, err := h.db.ManagerGroup().AllByGroupID(context.TODO(), groupID)
 	if err != nil {
@@ -24,6 +25,7 @@ func (h *Hub) GetGroupLists(UserID int64, lastMsgID, groupID int) (editMsg *tg.E
 	return editMsg, nil
 }
 
+// Info: Create message with info for reply message to create new group list
 func (h *Hub) createMessageCreateGroupList(UserID int64, groupID int) (*tg.MessageConfig, error) {
 	group, err := h.db.ManagerGroup().ByGroupID(context.TODO(), groupID)
 	if err != nil {
@@ -33,6 +35,7 @@ func (h *Hub) createMessageCreateGroupList(UserID int64, groupID int) (*tg.Messa
 	return msg, nil
 }
 
+// Info: Create group list in database
 func (h *Hub) createGroupList(UserID int64, listName, groupName string) (*tg.MessageConfig, error) {
 	group, err := h.db.ManagerGroup().ByGroupName(context.TODO(), groupName)
 	if err != nil {
@@ -51,6 +54,7 @@ func (h *Hub) createGroupList(UserID int64, listName, groupName string) (*tg.Mes
 	return msg, nil
 }
 
+// Info: Get list with all users in group with delete button
 func (h *Hub) getUserForDeleteFrGr(ChatID int64, lastMsgID, groupID int) (*tg.EditMessageTextConfig, error) {
 	groupInfo, err := h.db.ManagerGroup().InfoGroup(context.TODO(), groupID)
 	if err != nil {
@@ -65,6 +69,7 @@ func (h *Hub) getUserForDeleteFrGr(ChatID int64, lastMsgID, groupID int) (*tg.Ed
 	return editMsg, nil
 }
 
+// Info: User push on botton with name user who will deleted
 func (h *Hub) deleteUserFromGroup(ChatID, userID int64, groupID int) (*tg.MessageConfig, error) {
 	g := &store.Group{
 		UserID:  userID,
@@ -78,6 +83,7 @@ func (h *Hub) deleteUserFromGroup(ChatID, userID int64, groupID int) (*tg.Messag
 	return msg, nil
 }
 
+// Info: create message to reply on this, manager will invite new user by nickname
 func (h *Hub) createMessageForInviteUser(chatID int64, groupID int) (*tg.MessageConfig, error) {
 	group, err := h.db.ManagerGroup().ByGroupID(context.TODO(), groupID)
 	if err != nil {

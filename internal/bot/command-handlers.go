@@ -32,6 +32,12 @@ func (h *Hub) cmdStrart(chatID int64, userName string) (*tgbotapi.MessageConfig,
 	return msg, nil
 }
 
+func (h *Hub) cmdGetChoiceLists(chatID int64) *tgbotapi.MessageConfig {
+	msg := h.createMessage(chatID, choiceWhatTypeListMsg)
+	msg.ReplyMarkup = createInlineGetChoiceList()
+	return msg
+}
+
 func (h *Hub) cmdHelp(chatID int64) *tgbotapi.MessageConfig {
 	msg := tgbotapi.NewMessage(chatID, cmdHelpMessage)
 	return &msg

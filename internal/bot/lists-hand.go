@@ -26,7 +26,7 @@ func (h *Hub) createList(ChatID int64, list *store.ProductList) (*tg.MessageConf
 
 // Info: Select all users lists and create inline keyboard with its
 func (h *Hub) getListName(chatID int64, lastMsgID int) (editMsg *tg.EditMessageTextConfig, err error) {
-	lists, err := h.db.ProductList().GetAll(context.TODO(), int(chatID))
+	lists, err := h.db.ProductList().GetAll(context.TODO(), chatID)
 	if err != nil {
 		if err == store.NoRowListOfProductError {
 			editMsg = h.editMessage(chatID, lastMsgID, "Nothing is found. Create Youre First list!")
@@ -40,12 +40,6 @@ func (h *Hub) getListName(chatID int64, lastMsgID int) (editMsg *tg.EditMessageT
 	// editMsg = h.createMessage(chatID, "List of Product-lists")
 	editMsg.ReplyMarkup = &keyboard
 	return editMsg, nil
-}
-
-func (h *Hub) getChoiceLists(chatID int64) *tg.MessageConfig {
-	msg := h.createMessage(chatID, "select list")
-	msg.ReplyMarkup = createInlineGetChoiceList()
-	return msg
 }
 
 func (h *Hub) getProductList(ChatID int64, lastMsgID, listID int, listName string) (*tg.EditMessageTextConfig, error) {
@@ -142,4 +136,33 @@ func (h *Hub) editProductList(chatID int64, listName string, indexProducts map[i
 	msg := h.createMessage(chatID, text)
 	msg.ReplyMarkup = createProductsInline(listName)
 	return msg, nil
+}
+
+func (h *Hub) getNameGroupMergeList(chatID int64, listName string, lastMsgID int) (*tg.EditMessageTextConfig, error) {
+	listId, err := h.db.ProductList().GetListID(context.TODO(), listName)
+	if err != nil {
+		return nil, err
+	}
+	groups, err := h.db.ManagerGroup().UserGroup(context.TODO(), chatID)
+	if err != nil {
+		// TODO: Send default messaeg if user have not any group
+		if err == store.NoUserGroupError {
+			return nil, err
+		}
+		return nil, err
+	}
+	editMsg := h.editMessage(chatID, lastMsgID, choiceWhatGroupMerge)
+	editMsg.ReplyMarkup = createInlineMergeListGroup(groups, listId)
+	return editMsg, nil
+}
+
+func (h *Hub) mergeListWithGroup(chatID int64, groupID, listID, lastMsgID int) (*tg.EditMessageTextConfig, error) {
+	err := h.db.ProductList().MergeListGroup(context.TODO(), listID, groupID)
+	if err != nil {
+		return nil, err
+	}
+	editMsg := h.editMessage(chatID, lastMsgID, successMergeListGroupMgs)
+
+	editMsg.ReplyMarkup = createInlineGetCurGroup(groupID)
+	return editMsg, nil
 }
