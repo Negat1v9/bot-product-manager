@@ -30,14 +30,13 @@ func (h *Hub) getListName(chatID int64, lastMsgID int) (editMsg *tg.EditMessageT
 	if err != nil {
 		if err == store.NoRowListOfProductError {
 			editMsg = h.editMessage(chatID, lastMsgID, "Nothing is found. Create Youre First list!")
-			// editMsg = h.createMessage(chatID, "Nothing is found. Create Youre First list!")
 			return editMsg, nil
 		}
 		return nil, err
 	}
 	keyboard := createListProductInline(lists)
-	editMsg = h.editMessage(chatID, lastMsgID, "List of Product-lists")
-	// editMsg = h.createMessage(chatID, "List of Product-lists")
+	editMsg = h.editMessage(chatID, lastMsgID, listsProductsMsgHelp)
+
 	editMsg.ReplyMarkup = &keyboard
 	return editMsg, nil
 }

@@ -24,14 +24,10 @@ func isGetProductList(s string) bool {
 	return strings.HasPrefix(s, prefixCallBackListProduct)
 }
 
-// func isSelectList(s string) bool {
-// 	return strings.EqualFold(s, buttonList)
-// }
-
 // PRODUCTS FILTERS
 
 func isAddNewProductForward(s string) bool {
-	return strings.HasPrefix(s, addNewProductMessage)
+	return strings.HasPrefix(s, addNewProductMessageReply)
 }
 
 func isUserChoiceLists(s string) bool {

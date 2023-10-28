@@ -129,7 +129,7 @@ func parseNameGroupAddUser(s string) string {
 }
 
 func parseNameListForAddProd(s string) string {
-	res, _ := strings.CutPrefix(s, addNewProductMessage)
+	res, _ := strings.CutPrefix(s, addNewProductMessageReply)
 	return res
 }
 func parseGroupListName(s string) string {

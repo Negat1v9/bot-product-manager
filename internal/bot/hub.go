@@ -98,7 +98,7 @@ func (h *Hub) CallBackUpdate(cbq *tg.CallbackQuery, timeStart time.Time) error {
 
 	case isAddNewProduct(cbq.Data):
 		listName := parseCallBackOneParam(prefixAddProductList, cbq.Data)
-		msg = h.createMessage(cbq.From.ID, addNewProductMessage+listName)
+		msg = h.createMessage(cbq.From.ID, addNewProductMessageReply+listName)
 
 	case isGetGroupLists(cbq.Data):
 		data := parseCallBackOneParam(prefixCallBackListGroup, cbq.Data)
