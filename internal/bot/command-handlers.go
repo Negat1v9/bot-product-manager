@@ -8,11 +8,11 @@ import (
 )
 
 // Handler for /start command
-func (h *Hub) cmdStrart(chatID int64, userName string) (*tgbotapi.MessageConfig, error) {
+func (h *Hub) cmdStrart(chatID int64, userName string) (msg *tgbotapi.MessageConfig, err error) {
 	// obj user
 	u := &store.User{
 		ChatID:   chatID,
-		UserName: userName,
+		UserName: &userName,
 	}
 	// To confirm user in db or not
 	isExist, err := h.db.User().IsExist(context.TODO(), u)
@@ -26,14 +26,18 @@ func (h *Hub) cmdStrart(chatID int64, userName string) (*tgbotapi.MessageConfig,
 	if err != nil {
 		return nil, err
 	}
-	// create msg
-	msg := h.createMessage(chatID, cmdStart)
-	msg.ReplyMarkup = menuKeyboard
+	// User have not NickName
+	if userName == "" {
+		msg = h.createMessage(chatID, NotNickNameUserMsg)
+	} else {
+		// create msg
+		msg = h.createMessage(chatID, cmdStart)
+	}
 	return msg, nil
 }
 
 func (h *Hub) cmdGetChoiceLists(chatID int64) *tgbotapi.MessageConfig {
-	msg := h.createMessage(chatID, choiceWhatTypeListMsg)
+	msg := h.createMessage(chatID, cmdMenu)
 	msg.ReplyMarkup = createInlineGetChoiceList()
 	return msg
 }

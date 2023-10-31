@@ -7,27 +7,21 @@ import (
 	tg "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-// keyboard for generatins
-var (
-	menuKeyboard = tg.NewReplyKeyboard(
-		tg.NewKeyboardButtonRow(
-			// tg.NewKeyboardButton(buttonList),
-			tg.NewKeyboardButton(buttonCreateList),
-			tg.NewKeyboardButton(buttonNewGroup),
-		),
-	)
-)
-
 // Info: inline keyboard for user choice list or group-list
 func createInlineGetChoiceList() tg.InlineKeyboardMarkup {
 	kb := tg.NewInlineKeyboardMarkup(
 		tg.NewInlineKeyboardRow(
 			tg.NewInlineKeyboardButtonData(
-				choiceUserList, prefixGetUserList)),
+				choiceUserList, prefixGetUserList),
+			tg.NewInlineKeyboardButtonData(
+				choiceGroupList, prefixGetGroupLists),
+		),
 		tg.NewInlineKeyboardRow(
 			tg.NewInlineKeyboardButtonData(
-				choiceGroupList, prefixGetGroupLists,
-			)),
+				choiceCreateSoloList, prefixCreateSoloList),
+			tg.NewInlineKeyboardButtonData(
+				choiceCreateGroup, prefixCreateGroup),
+		),
 	)
 	return kb
 }
@@ -158,7 +152,7 @@ func createInlineDeleteUser(users []store.User, groupID int, ownerId int64) *tg.
 		}
 		sUsID, sGrID := strconv.FormatInt(user.ChatID, 10), strconv.Itoa(groupID)
 		callBack := createCallBackFewParam(prefixCallBackDelUserFromGr, sUsID, sGrID)
-		button = tg.NewInlineKeyboardButtonData(user.UserName, *callBack)
+		button = tg.NewInlineKeyboardButtonData(*user.UserName, *callBack)
 		keyboard.InlineKeyboard = append(keyboard.InlineKeyboard,
 			[]tg.InlineKeyboardButton{button})
 	}

@@ -51,7 +51,7 @@ type ProductRepo interface {
 
 type User struct {
 	ChatID   int64
-	UserName string
+	UserName *string
 }
 
 type GroupInfo struct {

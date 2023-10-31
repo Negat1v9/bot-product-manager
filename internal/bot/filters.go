@@ -17,7 +17,7 @@ func isCreateNameForward(s string) bool {
 }
 
 func isCreateList(s string) bool {
-	return strings.EqualFold(s, buttonCreateList)
+	return strings.EqualFold(s, prefixCreateSoloList)
 }
 
 func isGetProductList(s string) bool {
@@ -65,7 +65,7 @@ func isMergeListGroup(s string) bool {
 
 // GROUP FILTERS
 func isCreateGroup(s string) bool {
-	return strings.EqualFold(s, buttonNewGroup)
+	return strings.EqualFold(s, prefixCreateGroup)
 }
 
 func isAddNewUserGroup(s string) bool {

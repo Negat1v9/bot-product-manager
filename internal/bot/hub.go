@@ -91,6 +91,12 @@ func (h *Hub) CallBackUpdate(cbq *tg.CallbackQuery, timeStart time.Time) error {
 	case isUserChoiceGroupLists(cbq.Data):
 		editMsg, err = h.GetAllUserGroup(cbq.From.ID, cbq.Message.MessageID)
 
+	case isCreateList(cbq.Data):
+		editMsg = h.createMsgToCreateList(cbq.From.ID, cbq.Message.MessageID)
+
+	case isCreateGroup(cbq.Data):
+		editMsg, err = h.createMessageForNewGroup(cbq.From.ID, cbq.Message.MessageID)
+
 	case isGetProductList(cbq.Data):
 		data := parseCallBackFewParam(prefixCallBackListProduct, cbq.Data)
 		listID, listName := convSToI[int](data[0], 0), data[1]
@@ -171,7 +177,7 @@ func (h *Hub) isCommand(text string, msgInfo *tg.Message) (*tg.MessageConfig, er
 		}
 		return msg, nil
 
-	case "/lists":
+	case "/menu":
 		msg := h.cmdGetChoiceLists(msgInfo.From.ID)
 		return msg, nil
 
@@ -185,18 +191,17 @@ func (h *Hub) isCommand(text string, msgInfo *tg.Message) (*tg.MessageConfig, er
 
 func (h *Hub) isMessage(text string, msgInfo *tg.Message) (*tg.MessageConfig, error) {
 	switch {
-	case isCreateList(text):
-		msg := h.answerToCreateList(msgInfo.From.ID)
-		return msg, nil
+	// case isCreateList(text):
+	// 	msg := h.answerToCreateList(msgInfo.From.ID)
+	// 	return msg, nil
 
 	// case isSelectList(text):
 	// 	msg := h.getChoiceLists(msgInfo.From.ID)
 
 	// 	return msg, nil
-
-	case isCreateGroup(text):
-		msg := h.createMessageForNewGroup(msgInfo.Chat.ID)
-		return msg, nil
+	// case isCreateGroup(text):
+	// 	msg := h.createMessageForNewGroup(msgInfo.Chat.ID)
+	// 	return msg, nil
 	}
 	return nil, nil
 }
@@ -251,12 +256,13 @@ func (h *Hub) isForwardMessage(msg *tg.Message) (*tg.MessageConfig, error) {
 
 func (h *Hub) editMessage(chatID int64, lastmsgDI int, text string) *tg.EditMessageTextConfig {
 	msg := tg.NewEditMessageText(chatID, lastmsgDI, text)
-
+	msg.ParseMode = "html"
 	return &msg
 }
 
 func (h *Hub) createMessage(ChatId int64, text string) *tg.MessageConfig {
 	msgCongig := tg.NewMessage(ChatId, text)
+	msgCongig.ParseMode = "html"
 	return &msgCongig
 }
 

@@ -8,9 +8,9 @@ import (
 	tg "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-func (h *Hub) answerToCreateList(ChatID int64) *tg.MessageConfig {
-	msg := h.createMessage(ChatID, answerCreateListMsg)
-	return msg
+func (h *Hub) createMsgToCreateList(ChatID int64, lastMsgID int) *tg.EditMessageTextConfig {
+	editMsg := h.editMessage(ChatID, lastMsgID, answerCreateListMsg)
+	return editMsg
 }
 
 // Info: Create list in database, and answer with new list name

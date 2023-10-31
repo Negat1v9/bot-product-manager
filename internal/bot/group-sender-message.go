@@ -31,7 +31,7 @@ func (h *Hub) sendInviteMessage(newUserName string, groupID int, ownerID int64) 
 		return userAlredyGroupError
 	}
 	ownerGroup := searchOwnerGroup(ownerID, *groupInfo.UsersInfo)
-	textForMsg := createMessgeToInviteNewUser(ownerGroup.UserName, groupInfo.GroupName)
+	textForMsg := createMessgeToInviteNewUser(*ownerGroup.UserName, groupInfo.GroupName)
 	msgForNewUser := h.createMessage(newUser.ChatID, textForMsg)
 	msgForNewUser.ReplyMarkup = createInlineInviteUserGroup(groupID, newUser.ChatID)
 	h.response <- MessageWithTime{Msg: msgForNewUser, WorkTime: time.Now()}

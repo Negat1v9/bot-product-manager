@@ -7,9 +7,18 @@ import (
 	tg "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-func (h *Hub) createMessageForNewGroup(ChatID int64) *tg.MessageConfig {
-	msg := h.createMessage(ChatID, createGroupMessage)
-	return msg
+func (h *Hub) createMessageForNewGroup(ChatID int64, lastMsgID int) (*tg.EditMessageTextConfig, error) {
+	var editMsg *tg.EditMessageTextConfig
+	user, err := h.db.User().ByID(context.TODO(), ChatID)
+	if err != nil {
+		return nil, err
+	}
+	if user.UserName != nil {
+		editMsg = h.editMessage(ChatID, lastMsgID, createGroupMessage)
+	} else {
+		editMsg = h.editMessage(ChatID, lastMsgID, NotNickNameUserMsg)
+	}
+	return editMsg, nil
 }
 
 func (h *Hub) createNewGroup(ChatID int64, managerGroup *store.GroupInfo) (*tg.MessageConfig, error) {
