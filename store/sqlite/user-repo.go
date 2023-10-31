@@ -28,7 +28,8 @@ func (r *UserRepo) ByID(ctx context.Context, ID int64) (*store.User, error) {
 		`SELECT id, name 
 			FROM users
 		WHERE id=?;`,
-	).Scan(&u.ChatID, u.UserName)
+		ID,
+	).Scan(&u.ChatID, &u.UserName)
 	if err != nil {
 		return nil, err
 	}
