@@ -54,6 +54,18 @@ func (h *Hub) createGroupList(UserID int64, listName, groupName string) (*tg.Mes
 	return msg, nil
 }
 
+func (h *Hub) getUserFromGroup(chatID int64, lastMsgID, groupID int) (*tg.EditMessageTextConfig, error) {
+	groupInfo, err := h.db.ManagerGroup().InfoGroup(context.TODO(), groupID)
+	if err != nil {
+		return nil, err
+	}
+	text := createMessageGetAllUsersGroup(*groupInfo.UsersInfo, groupInfo.OwnerID)
+	editMsg := h.editMessage(chatID, lastMsgID, text)
+	editMsg.ReplyMarkup = creaetInlineUsersGroupActions(groupInfo.ID)
+
+	return editMsg, nil
+}
+
 // Info: Get list with all users in group with delete button
 func (h *Hub) getUserForDeleteFrGr(ChatID int64, lastMsgID, groupID int) (*tg.EditMessageTextConfig, error) {
 	groupInfo, err := h.db.ManagerGroup().InfoGroup(context.TODO(), groupID)

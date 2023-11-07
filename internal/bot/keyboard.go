@@ -133,13 +133,23 @@ func createInlineGroupActions(groupID int) []tg.InlineKeyboardButton {
 	sGroupID := strconv.Itoa(groupID)
 	buttonRow := tg.NewInlineKeyboardRow(
 		tg.NewInlineKeyboardButtonData(
-			"create", *createCallBackOneParam(prefixCreateGroupList, sGroupID)),
+			choiceCreateSoloList, *createCallBackOneParam(prefixCreateGroupList, sGroupID)),
 		tg.NewInlineKeyboardButtonData(
-			"add users", *createCallBackOneParam(prefixAddUserGroup, sGroupID)),
-		tg.NewInlineKeyboardButtonData(
-			"del users", *createCallBackOneParam(prefixGetUserToDelete, sGroupID)),
+			choiceGetAllUsersGroup, *createCallBackOneParam(prefixGetAllUsersGroup, sGroupID)),
 	)
 	return buttonRow
+}
+
+func creaetInlineUsersGroupActions(groupID int) *tg.InlineKeyboardMarkup {
+	sGroupID := strconv.Itoa(groupID)
+	kb := tg.NewInlineKeyboardMarkup(tg.NewInlineKeyboardRow(
+		tg.NewInlineKeyboardButtonData(
+			"🟢 invite", *createCallBackOneParam(prefixAddUserGroup, sGroupID)),
+		tg.NewInlineKeyboardButtonData(
+			"🚫 delete", *createCallBackOneParam(prefixGetUserToDelete, sGroupID)),
+	),
+	)
+	return &kb
 }
 
 func createInlineDeleteUser(users []store.User, groupID int, ownerId int64) *tg.InlineKeyboardMarkup {
@@ -152,7 +162,7 @@ func createInlineDeleteUser(users []store.User, groupID int, ownerId int64) *tg.
 		}
 		sUsID, sGrID := strconv.FormatInt(user.ChatID, 10), strconv.Itoa(groupID)
 		callBack := createCallBackFewParam(prefixCallBackDelUserFromGr, sUsID, sGrID)
-		button = tg.NewInlineKeyboardButtonData(*user.UserName, *callBack)
+		button = tg.NewInlineKeyboardButtonData(createButtonDeleteUser(*user.UserName), *callBack)
 		keyboard.InlineKeyboard = append(keyboard.InlineKeyboard,
 			[]tg.InlineKeyboardButton{button})
 	}

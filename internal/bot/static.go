@@ -17,11 +17,6 @@ var botCommands []tgbotapi.BotCommand = []tgbotapi.BotCommand{
 	},
 }
 
-// var (
-// 	buttonCreateList = "new-list"
-// 	buttonNewGroup   = "create-group"
-// )
-
 // prefix for callback initilization
 var (
 	prefixCreateSoloList          = "create-list"
@@ -34,6 +29,7 @@ var (
 	prefixChangeList              = "change-"
 	prefixCreateGroupList         = "createGroupList-"
 	prefixAddUserGroup            = "addUserGroup-"
+	prefixGetAllUsersGroup        = "UserGroup-"
 	prefixGetUserToDelete         = "GetDeleteUser-"
 	prefixCallBackListGroup       = "IDGROUP"
 	prefixCallBackDelUserFromGr   = "DelUsIDGrID"
@@ -55,13 +51,14 @@ var (
 
 // Messages
 var (
-	choiceUserList       = "your lists 📝"
-	choiceGroupList      = "group lists 👥"
-	choiceCreateSoloList = "new-list 📚"
-	choiceCreateGroup    = "new-group 🥷"
-	cmdMenu              = "🗿 <b>Options</b> 🗿\n\n⚾ Select lists created for you for your self ☞ <b><u>your lists</u></b> 📝\n\n🥎 Select lists created in the group ☞ <b><u>group lists</u></b> 👥\n\n🏀 Create new list for youre self ☞ <b><u>new-list</u></b> 📚\n\n🎾 Create new group ☞ <b><u>new-group</u></b> 🥷'"
-	cmdStart             = "Hi friend, I'm a bot that is designed to create lists 📋 and execute them.\n\nTo find out more click /help. 💭️\n\nClick on /menu to receive all options"
-	cmdHelpMessage       = "Hi, friend 👋. Let me tell you a little about myself:\n\nI'm a bot 👾 that was made to automate\nthe creation of lists 📝 in a telegram, you can:\n\n1. Create personal lists and add things to them.🔥\n\n2. Create group lists that can be edited by all its participants. 🌚\n\n❓ How to use ❓\n\n1️⃣ Select the list to add a new product\n\n2️⃣ Click the add button and\n\n3️⃣ Reply on message message with the product\nnames separated by a ',' or '.'\n\n🟠Example 🧾\n\n✏️ Squash caviar, Juice, Potato, Soup ✏️"
+	choiceUserList         = "your lists 📝"
+	choiceGroupList        = "group lists 👥"
+	choiceCreateSoloList   = "new-list 📚"
+	choiceCreateGroup      = "new-group 🥷"
+	choiceGetAllUsersGroup = "users 🧞‍♂️"
+	cmdMenu                = "🗿 <b>Options</b> 🗿\n\n⚾ Select lists created for you for your self ☞ <b><u>your lists</u></b> 📝\n\n🥎 Select lists created in the group ☞ <b><u>group lists</u></b> 👥\n\n🏀 Create new list for youre self ☞ <b><u>new-list</u></b> 📚\n\n🎾 Create new group ☞ <b><u>new-group</u></b> 🥷'"
+	cmdStart               = "Hi friend, I'm a bot that is designed to create lists 📋 and execute them.\n\nTo find out more click /help. 💭️\n\nClick on /menu to receive all options"
+	cmdHelpMessage         = "Hi, friend 👋. Let me tell you a little about myself:\n\nI'm a bot 👾 that was made to automate\nthe creation of lists 📝 in a telegram, you can:\n\n1. Create personal lists and add things to them.🔥\n\n2. Create group lists that can be edited by all its participants. 🌚\n\n❓ How to use ❓\n\n1️⃣ Select the list to add a new product\n\n2️⃣ Click the add button and\n\n3️⃣ Reply on message message with the product\nnames separated by a ',' or '.'\n\n🟠Example 🧾\n\n✏️ Squash caviar, Juice, Potato, Soup ✏️"
 
 	refuseJoinGroupMessage    = "It's a shame, but oh well, keep creating lists alone :("
 	groupIsCreatesMessage     = "new group is created"

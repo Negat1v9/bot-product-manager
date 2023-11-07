@@ -133,6 +133,11 @@ func (h *Hub) CallBackUpdate(cbq *tg.CallbackQuery, timeStart time.Time) error {
 		groupID, listID := convSToI[int](data[0], 0), convSToI[int](data[1], 0)
 		editMsg, err = h.mergeListWithGroup(cbq.From.ID, groupID, listID, cbq.Message.MessageID)
 
+	case isGetAllUsersGroup(cbq.Data):
+		data := parseCallBackOneParam(prefixGetAllUsersGroup, cbq.Data)
+		groupID := convSToI[int](data, 0)
+		editMsg, err = h.getUserFromGroup(cbq.From.ID, cbq.Message.MessageID, groupID)
+
 	case isGetUsersForDelGroup(cbq.Data):
 		data := parseCallBackOneParam(prefixGetUserToDelete, cbq.Data)
 		groupID := convSToI[int](data, 0)

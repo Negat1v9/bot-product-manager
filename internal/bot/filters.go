@@ -107,3 +107,7 @@ func isUserRefuseInvite(s string) bool {
 func isSendInviteToNewUser(s string) bool {
 	return strings.HasPrefix(s, textForInvitingNewUser)
 }
+
+func isGetAllUsersGroup(s string) bool {
+	return strings.HasPrefix(s, prefixGetAllUsersGroup)
+}
