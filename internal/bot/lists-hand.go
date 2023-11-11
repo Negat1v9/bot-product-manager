@@ -21,6 +21,7 @@ func (h *Hub) createList(ChatID int64, list *store.ProductList) (*tg.MessageConf
 		return nil, err
 	}
 	msg := h.createMessage(ChatID, fmt.Sprintf("New list %s is created success", *list.Name))
+	msg.ReplyMarkup = createInlineGoToMenu()
 	return msg, nil
 }
 
@@ -30,6 +31,7 @@ func (h *Hub) getListName(chatID int64, lastMsgID int) (editMsg *tg.EditMessageT
 	if err != nil {
 		if err == store.NoRowListOfProductError {
 			editMsg = h.editMessage(chatID, lastMsgID, "Nothing is found. Create Youre First list!")
+			editMsg.ReplyMarkup = createInlineGoToMenu()
 			return editMsg, nil
 		}
 		return nil, err
@@ -97,12 +99,12 @@ func (h *Hub) addNewProduct(ChatID int64, Products, listName string) (*tg.Messag
 	return msg, nil
 }
 
-func (h *Hub) createMessageForEditList(ChatID int64, listName string) *tg.MessageConfig {
-	msg := h.createMessage(ChatID, answerEditListMessage+listName)
+func (h *Hub) createMessageForEditList(ChatID int64, listName string, lastMsgID int) *tg.EditMessageTextConfig {
+	msg := h.editMessage(ChatID, lastMsgID, answerEditListMessage+listName)
 	return msg
 }
 
-func (h *Hub) compliteProductList(ChatID int64, productListName string) (*tg.MessageConfig, error) {
+func (h *Hub) compliteProductList(ChatID int64, productListName string, lastMsgID int) (*tg.EditMessageTextConfig, error) {
 	listID, err := h.db.ProductList().GetListID(context.TODO(), productListName)
 	if err != nil {
 		return nil, err
@@ -111,8 +113,9 @@ func (h *Hub) compliteProductList(ChatID int64, productListName string) (*tg.Mes
 	if err != nil {
 		return nil, err
 	}
-	msg := h.createMessage(ChatID, isCompletesProductListMsg+productListName)
-	return msg, nil
+	editMsg := h.editMessage(ChatID, lastMsgID, isCompletesProductListMsg+productListName)
+	editMsg.ReplyMarkup = createInlineGoToMenu()
+	return editMsg, nil
 }
 
 func (h *Hub) editProductList(chatID int64, listName string, indexProducts map[int]bool) (*tg.MessageConfig, error) {
@@ -144,9 +147,10 @@ func (h *Hub) getNameGroupMergeList(chatID int64, listName string, lastMsgID int
 	}
 	groups, err := h.db.ManagerGroup().UserGroup(context.TODO(), chatID)
 	if err != nil {
-		// TODO: Send default messaeg if user have not any group
 		if err == store.NoUserGroupError {
-			return nil, err
+			editMsg := h.editMessage(chatID, lastMsgID, err.Error())
+			editMsg.ReplyMarkup = createInlineGoToMenu()
+			return editMsg, nil
 		}
 		return nil, err
 	}
@@ -164,4 +168,10 @@ func (h *Hub) mergeListWithGroup(chatID int64, groupID, listID, lastMsgID int) (
 
 	editMsg.ReplyMarkup = createInlineGetCurGroup(groupID)
 	return editMsg, nil
+}
+
+func (h *Hub) getMainMenu(chatID int64, lastMsgID int) *tg.EditMessageTextConfig {
+	editMsg := h.editMessage(chatID, lastMsgID, cmdMenu)
+	editMsg.ReplyMarkup = createInlineGetChoiceList()
+	return editMsg
 }

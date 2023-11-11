@@ -19,20 +19,20 @@ func (h *Hub) GetGroupLists(UserID int64, lastMsgID, groupID int) (editMsg *tg.E
 	} else {
 		editMsg = h.editMessage(UserID, lastMsgID, "Group List:")
 	}
-	isOwnerGroup := UserID == groupList.GroupOwnerID
+	// isOwnerGroup := UserID == groupList.GroupOwnerID
 
-	editMsg.ReplyMarkup = createInlineGroupList(groupList.PruductLists, groupID, isOwnerGroup)
+	editMsg.ReplyMarkup = createInlineGroupList(groupList.PruductLists, groupID)
 	return editMsg, nil
 }
 
 // Info: Create message with info for reply message to create new group list
-func (h *Hub) createMessageCreateGroupList(UserID int64, groupID int) (*tg.MessageConfig, error) {
+func (h *Hub) createMessageCreateGroupList(UserID int64, groupID, lastMsgID int) (*tg.EditMessageTextConfig, error) {
 	group, err := h.db.ManagerGroup().ByGroupID(context.TODO(), groupID)
 	if err != nil {
 		return nil, err
 	}
-	msg := h.createMessage(UserID, answerCreateGroupListMsg+group.GroupName)
-	return msg, nil
+	editMsg := h.editMessage(UserID, lastMsgID, answerCreateGroupListMsg+group.GroupName)
+	return editMsg, nil
 }
 
 // Info: Create group list in database
@@ -51,6 +51,7 @@ func (h *Hub) createGroupList(UserID int64, listName, groupName string) (*tg.Mes
 		return nil, err
 	}
 	msg := h.createMessage(UserID, `New list is created`)
+	msg.ReplyMarkup = createInlineGetCurGroup(group.ID)
 	return msg, nil
 }
 
@@ -61,8 +62,13 @@ func (h *Hub) getUserFromGroup(chatID int64, lastMsgID, groupID int) (*tg.EditMe
 	}
 	text := createMessageGetAllUsersGroup(*groupInfo.UsersInfo, groupInfo.OwnerID)
 	editMsg := h.editMessage(chatID, lastMsgID, text)
-	editMsg.ReplyMarkup = creaetInlineUsersGroupActions(groupInfo.ID)
-
+	isOwnerGroup := chatID == groupInfo.OwnerID
+	// if user is owner he can invite and delete new and old users
+	if isOwnerGroup {
+		editMsg.ReplyMarkup = creaetInlineUsersGroupActions(groupInfo.ID)
+	} else {
+		editMsg.ReplyMarkup = creaetInlineBackToGroupButton(groupID)
+	}
 	return editMsg, nil
 }
 
@@ -74,6 +80,7 @@ func (h *Hub) getUserForDeleteFrGr(ChatID int64, lastMsgID, groupID int) (*tg.Ed
 	}
 	if len(*groupInfo.UsersInfo) < 2 {
 		editMsg := h.editMessage(ChatID, lastMsgID, emptyUserInGroup)
+		editMsg.ReplyMarkup = creaetInlineBackToGroupButton(groupID)
 		return editMsg, nil
 	}
 	editMsg := h.editMessage(ChatID, lastMsgID, "Choise user from:"+groupInfo.GroupName)
@@ -82,7 +89,7 @@ func (h *Hub) getUserForDeleteFrGr(ChatID int64, lastMsgID, groupID int) (*tg.Ed
 }
 
 // Info: User push on botton with name user who will deleted
-func (h *Hub) deleteUserFromGroup(ChatID, userID int64, groupID int) (*tg.MessageConfig, error) {
+func (h *Hub) deleteUserFromGroup(ChatID, userID int64, groupID, lastMsgID int) (*tg.EditMessageTextConfig, error) {
 	g := &store.Group{
 		UserID:  userID,
 		GroupID: groupID,
@@ -91,16 +98,16 @@ func (h *Hub) deleteUserFromGroup(ChatID, userID int64, groupID int) (*tg.Messag
 	if err != nil {
 		return nil, err
 	}
-	msg := h.createMessage(ChatID, successDeletedUser)
+	msg := h.editMessage(ChatID, lastMsgID, successDeletedUser)
 	return msg, nil
 }
 
 // Info: create message to reply on this, manager will invite new user by nickname
-func (h *Hub) createMessageForInviteUser(chatID int64, groupID int) (*tg.MessageConfig, error) {
+func (h *Hub) createMessageForInviteUser(chatID int64, groupID, lastMsgID int) (*tg.EditMessageTextConfig, error) {
 	group, err := h.db.ManagerGroup().ByGroupID(context.TODO(), groupID)
 	if err != nil {
 		return nil, err
 	}
-	msg := h.createMessage(chatID, textForInvitingNewUser+group.GroupName)
-	return msg, nil
+	editMsg := h.editMessage(chatID, lastMsgID, textForInvitingNewUser+group.GroupName)
+	return editMsg, nil
 }

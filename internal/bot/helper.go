@@ -24,7 +24,7 @@ func createCallBackFewParam(prefix string, data ...string) *string {
 	res := []byte{}
 	res = append(res, []byte(prefix+data[0])...)
 	for i := 1; i < len(data); i++ {
-		res = append(res, []byte("-"+data[i])...)
+		res = append(res, []byte("@"+data[i])...)
 	}
 	s := string(res)
 	return &s
@@ -33,7 +33,7 @@ func parseCallBackFewParam(prefix, callBack string) []string {
 	res := []string{}
 	start := len(prefix)
 	for i := len(prefix); i < len(callBack); i++ {
-		if callBack[i] == '-' {
+		if callBack[i] == '@' {
 			res = append(res, callBack[start:i])
 			start = i + 1
 			continue
@@ -116,6 +116,15 @@ func deleteProductByIndex(products []string, targets map[int]bool) []string {
 		}
 	}
 	return res
+}
+
+func clearCallBackData(s string) string {
+	for i, v := range s {
+		if v == '@' {
+			return s[:i+1]
+		}
+	}
+	return s
 }
 
 // example NickName "@NaemNuam"

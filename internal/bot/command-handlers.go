@@ -36,20 +36,19 @@ func (h *Hub) cmdStrart(chatID int64, userName string) (msg *tgbotapi.MessageCon
 	return msg, nil
 }
 
-func (h *Hub) cmdGetChoiceLists(chatID int64) *tgbotapi.MessageConfig {
+func (h *Hub) cmdGetMenu(chatID int64) *tgbotapi.MessageConfig {
 	msg := h.createMessage(chatID, cmdMenu)
 	msg.ReplyMarkup = createInlineGetChoiceList()
 	return msg
 }
 
 func (h *Hub) cmdHelp(chatID int64) *tgbotapi.MessageConfig {
-	msg := tgbotapi.NewMessage(chatID, cmdHelpMessage)
-	return &msg
+	msg := h.createMessage(chatID, cmdHelpMessage)
+	return msg
 }
 
 // Handler for default message
 func (h *Hub) cmdDefault(chatID int64) *tgbotapi.MessageConfig {
-	// msg := h.editMessage(chatID, lastMsgID, "Edited!!!")
-	msg := tgbotapi.NewMessage(chatID, "Default command")
-	return &msg
+	msg := h.createMessage(chatID, "I don`t know this command")
+	return msg
 }

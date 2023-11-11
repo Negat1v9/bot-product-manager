@@ -19,25 +19,53 @@ var botCommands []tgbotapi.BotCommand = []tgbotapi.BotCommand{
 
 // prefix for callback initilization
 var (
-	prefixCreateSoloList          = "create-list"
-	prefixCreateGroup             = "create-group"
+	prefixCreateSoloList          = "create_list"
+	prefixCallBackListProduct     = "IDNAME@"
+	prefixAddProductList          = "add@"
 	prefixGetUserList             = "getlist"
 	prefixGetGroupLists           = "getGroups"
-	prefixCallBackListProduct     = "IDNAME"
-	prefixAddProductList          = "add-"
-	prefixCompliteList            = "compl-"
-	prefixChangeList              = "change-"
-	prefixCreateGroupList         = "createGroupList-"
-	prefixAddUserGroup            = "addUserGroup-"
-	prefixGetAllUsersGroup        = "UserGroup-"
-	prefixGetUserToDelete         = "GetDeleteUser-"
-	prefixCallBackListGroup       = "IDGROUP"
-	prefixCallBackDelUserFromGr   = "DelUsIDGrID"
-	prefixCallBackInsertUserGroup = "insertInGroup"
-	prefixCallBackRefuseUserGroup = "refuseInGroup"
-	prefixToMergeListGroup        = "toMerge-"
-	prefixMergeListWithGroup      = "mergeListGrIDListID-"
+	prefixCompliteList            = "compl@"
+	prefixChangeList              = "change@"
+	prefixToMergeListGroup        = "toMerge@"
+	prefixMergeListWithGroup      = "mergeListGrIDListID@"
+	prefixCreateGroup             = "create_group"
+	prefixGetAllUsersGroup        = "GetUserGroup@"
+	prefixAddUserGroup            = "addUserGroup@"
+	prefixCallBackInsertUserGroup = "insertInGroup@"
+	prefixCallBackRefuseUserGroup = "refuseInGroup@"
+	prefixGetUserToDelete         = "GetDeleteUser@"
+	prefixCallBackDelUserFromGr   = "DelUsIDGrID@"
+	prefixCreateGroupList         = "createGroupList@"
+	prefixCallBackListGroup       = "IDGROUP@"
+	prefixGetMainMenu             = "getMenu"
+	prefixLeaveGroup              = "leaveGroup@"
+	prefixLeaveOwnerGroup         = "ownerLeaveGroupID@"
 )
+
+// map with prefix to get type of callBack update
+var prefixsMap = map[string]int{
+	prefixCreateSoloList:          isWantCreateList,
+	prefixCallBackListProduct:     isGetProductList,
+	prefixAddProductList:          isWantAddNewProduct,
+	prefixGetUserList:             isGetLists,
+	prefixGetGroupLists:           isGetGroupLists,
+	prefixCompliteList:            isCompliteList,
+	prefixChangeList:              isWantEditList,
+	prefixToMergeListGroup:        isWantMergeList,
+	prefixMergeListWithGroup:      isMergeListGroup,
+	prefixCreateGroup:             isWantCreateGroup,
+	prefixGetAllUsersGroup:        isGetAllUsersGroup,
+	prefixAddUserGroup:            isWantInviteNewUser,
+	prefixCallBackInsertUserGroup: isUserReadyJoinGroup,
+	prefixCallBackRefuseUserGroup: isUserRefusedGroup,
+	prefixGetUserToDelete:         isGetUsersToDelete,
+	prefixCallBackDelUserFromGr:   isDeleteUserFromGroup,
+	prefixCreateGroupList:         isWantCreateGroupList,
+	prefixCallBackListGroup:       isGetAllGroupLists,
+	prefixGetMainMenu:             isGetMainMenu,
+	prefixLeaveGroup:              isLeaveGroup,
+	prefixLeaveOwnerGroup:         isLeaveOwnerGroup,
+}
 
 // forward messages drafts
 var (
@@ -56,7 +84,7 @@ var (
 	choiceCreateSoloList   = "new-list 📚"
 	choiceCreateGroup      = "new-group 🥷"
 	choiceGetAllUsersGroup = "users 🧞‍♂️"
-	cmdMenu                = "🗿 <b>Options</b> 🗿\n\n⚾ Select lists created for you for your self ☞ <b><u>your lists</u></b> 📝\n\n🥎 Select lists created in the group ☞ <b><u>group lists</u></b> 👥\n\n🏀 Create new list for youre self ☞ <b><u>new-list</u></b> 📚\n\n🎾 Create new group ☞ <b><u>new-group</u></b> 🥷'"
+	cmdMenu                = "🗿 <b>Options</b> 🗿\n\n⚾ Select lists created for you for your self ☞ <b><u>your lists</u></b> 📝\n\n🥎 Select lists created in the group ☞ <b><u>group lists</u></b> 👥\n\n🏀 Create new list for youre self ☞ <b><u>new-list</u></b> 📚\n\n🎾 Create new group ☞ <b><u>new-group</u></b> 🥷"
 	cmdStart               = "Hi friend, I'm a bot that is designed to create lists 📋 and execute them.\n\nTo find out more click /help. 💭️\n\nClick on /menu to receive all options"
 	cmdHelpMessage         = "Hi, friend 👋. Let me tell you a little about myself:\n\nI'm a bot 👾 that was made to automate\nthe creation of lists 📝 in a telegram, you can:\n\n1. Create personal lists and add things to them.🔥\n\n2. Create group lists that can be edited by all its participants. 🌚\n\n❓ How to use ❓\n\n1️⃣ Select the list to add a new product\n\n2️⃣ Click the add button and\n\n3️⃣ Reply on message message with the product\nnames separated by a ',' or '.'\n\n🟠Example 🧾\n\n✏️ Squash caviar, Juice, Potato, Soup ✏️"
 
@@ -67,7 +95,9 @@ var (
 	editedProductList         = "List has been success edited"
 	isCompletesProductListMsg = "Congratulations, you have completed the worksheet - "
 
-	successDeletedUser        = "User success deleted"
+	ownerGroupWantLeave       = "❗ You are the owner of this group, if you leave it it will be deleted ❌"
+	successLeaveGroup         = "You have successfully left the group 🌈"
+	successDeletedUser        = "User success deleted ❎"
 	refusedUserMessage        = "Unfortunately, user %s did not agree to join the group. It's better not to invite him again, why should we bother this guy in vain?"
 	inviteUserMessage         = "User %s invited you to group %s, do you want to join it?"
 	inviteSendMessage         = "Invitation sent"

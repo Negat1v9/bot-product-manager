@@ -15,7 +15,7 @@ import (
 const (
 	timeForSkipUpdates   = 5
 	bufferMessages       = 10
-	logDuractionResponse = "time create and send response"
+	logDuractionResponse = "request processing time"
 )
 
 type Bot struct {
@@ -69,7 +69,6 @@ func (b *Bot) startPooling(updates tgbotapi.UpdatesChannel) error {
 	for update := range updates {
 		// Message update
 		if update.Message != nil {
-			b.logger.Info("Get messageid", slog.Int("ID", update.Message.MessageID))
 			// manage cmd or message to hub
 			go func(msg *tgbotapi.Message) {
 				start := time.Now()
@@ -85,7 +84,6 @@ func (b *Bot) startPooling(updates tgbotapi.UpdatesChannel) error {
 			continue
 		}
 		if update.CallbackQuery != nil {
-			b.logger.Info("Get messageid", slog.Int("ID", update.CallbackQuery.Message.MessageID))
 			go func(c *tgbotapi.CallbackQuery) {
 				start := time.Now()
 				err := b.hub.CallBackUpdate(c, start)
@@ -113,7 +111,7 @@ func (b *Bot) MessageSender() error {
 			go func() {
 				defer func() {
 					b.logger.Info(logDuractionResponse,
-						slog.Duration(" ", time.Now().Sub(msg.WorkTime)))
+						slog.Duration("time", time.Now().Sub(msg.WorkTime)))
 				}()
 				if msg.EditMesage != nil {
 					if _, err := b.client.Send(msg.EditMesage); err != nil {
@@ -137,11 +135,11 @@ func (b *Bot) skipLastUpdates(updates tgbotapi.UpdatesChannel) {
 	timer := time.NewTicker(time.Second * timeForSkipUpdates)
 	end := make(chan struct{})
 	go func() {
-		count := 0
+		count := 1
 		for {
 			select {
 			case <-updates:
-				b.logger.Info("skip update", slog.Int("count", count))
+				b.logger.Info("skip update", slog.Int("N", count))
 				count++
 			case <-timer.C:
 				end <- struct{}{}

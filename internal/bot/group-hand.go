@@ -35,6 +35,7 @@ func (h *Hub) createNewGroup(ChatID int64, managerGroup *store.GroupInfo) (*tg.M
 		return nil, err
 	}
 	msg := h.createMessage(ChatID, groupIsCreatesMessage)
+	msg.ReplyMarkup = createInlineGoToGroups()
 	return msg, nil
 }
 
@@ -43,13 +44,12 @@ func (h *Hub) GetAllUserGroup(chatID int64, lastMsgID int) (*tg.EditMessageTextC
 	if err != nil {
 		if err == store.NoUserGroupError {
 			editMsg := h.editMessage(chatID, lastMsgID, err.Error())
-			// editMsg := h.createMessage(ChatID, err.Error())
+			editMsg.ReplyMarkup = createInlineGoToMenu()
 			return editMsg, nil
 		}
 		return nil, err
 	}
-	editMsg := h.editMessage(chatID, lastMsgID, "Groups:")
-	// msg := h.createMessage(chatID, )
+	editMsg := h.editMessage(chatID, lastMsgID, "All the groups you are in 🎡")
 	editMsg.ReplyMarkup = createInlineGroupName(groups)
 	return editMsg, nil
 }
@@ -93,5 +93,38 @@ func (h *Hub) userRefuseJoinGroup(userID int64, userName string, groupID int) (*
 		return nil, err
 	}
 	editMsg := h.createMessage(userID, refuseJoinGroupMessage)
+	return editMsg, nil
+}
+
+func (h *Hub) leaveFromGroup(chatID int64, groupID, lastMsgID int) (*tg.EditMessageTextConfig, error) {
+	groupInfo, err := h.db.ManagerGroup().InfoGroup(context.TODO(), groupID)
+	if err != nil {
+		return nil, err
+	}
+	if groupInfo.OwnerID == chatID {
+		editMsg := h.editMessage(chatID, lastMsgID, ownerGroupWantLeave)
+		editMsg.ReplyMarkup = createInlineMakeSureDelete(groupID)
+		return editMsg, nil
+	}
+	g := &store.Group{
+		UserID:  chatID,
+		GroupID: groupInfo.ID,
+	}
+	// delete user
+	if err = h.db.Group().DeleteUser(context.TODO(), g); err != nil {
+		return nil, err
+	}
+	editMsg := h.editMessage(chatID, lastMsgID, successLeaveGroup)
+	editMsg.ReplyMarkup = createInlineGoToGroups()
+	return editMsg, nil
+}
+
+func (h *Hub) leaveAndDeleteGroup(chatID int64, groupID, lastMsgID int) (*tg.EditMessageTextConfig, error) {
+	err := h.db.ManagerGroup().DeleteGroup(context.TODO(), groupID)
+	if err != nil {
+		return nil, err
+	}
+	editMsg := h.editMessage(chatID, lastMsgID, successLeaveGroup)
+	editMsg.ReplyMarkup = createInlineGoToGroups()
 	return editMsg, nil
 }

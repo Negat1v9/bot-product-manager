@@ -167,3 +167,15 @@ func (r *ManagerGroupRepo) UserGroup(ctx context.Context, userID int64) ([]store
 
 	return groups, nil
 }
+
+func (r *ManagerGroupRepo) DeleteGroup(ctx context.Context, groupID int) error {
+	_, err := r.storage.db.ExecContext(ctx,
+		`DELETE FROM group_info
+		WHERE group_info.id=?;`,
+		groupID,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}

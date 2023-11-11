@@ -25,6 +25,7 @@ type ManagerGroupRepo interface {
 	AllByGroupID(ctx context.Context, groupID int) (*GroupList, error)
 	UserGroup(ctx context.Context, userID int64) ([]GroupInfo, error)
 	InfoGroup(ctx context.Context, groupID int) (*GroupInfo, error)
+	DeleteGroup(ctx context.Context, groupID int) error
 }
 
 type GroupRepo interface {
