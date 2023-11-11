@@ -30,7 +30,6 @@ type ManagerGroupRepo interface {
 
 type GroupRepo interface {
 	AddUser(ctx context.Context, g *Group) error
-	GroupByUserAndGroupID(ctx context.Context, userID int64, groupID int) (*GroupInfo, error)
 	DeleteUser(ctx context.Context, g *Group) error
 }
 

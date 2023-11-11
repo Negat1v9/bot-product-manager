@@ -3,6 +3,7 @@ package telegram
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/Negat1v9/telegram-bot-orders/store"
@@ -51,5 +52,27 @@ func (h *Hub) sendRufuseAnswerToOwner(groupID int, refusedName string) error {
 	text := createMessageUserRefusedOrder(refusedName)
 	msg := h.createMessage(ownerUser.ChatID, text)
 	h.response <- MessageWithTime{Msg: msg, WorkTime: start}
+	return nil
+}
+
+func (h *Hub) sendNotifAddNewList(createrID int64, groupID int, listName string) error {
+	start := time.Now()
+	groupInfo, err := h.db.ManagerGroup().InfoGroup(context.TODO(), groupID)
+	if err != nil {
+		return err
+	}
+	for _, u := range *groupInfo.UsersInfo {
+		if u.ChatID == createrID {
+			continue
+		}
+		text := fmt.Sprintf(
+			"⚡ Hello <b>%s</b>, a new list has appeared in the %s group.\nLook what it is 👀",
+			*u.UserName,
+			groupInfo.GroupName,
+		)
+		msg := h.createMessage(u.ChatID, text)
+		msg.ReplyMarkup = createInlineGetCurGroup(groupID)
+		h.response <- MessageWithTime{Msg: msg, WorkTime: start}
+	}
 	return nil
 }

@@ -50,6 +50,7 @@ func (h *Hub) createGroupList(UserID int64, listName, groupName string) (*tg.Mes
 	if err != nil {
 		return nil, err
 	}
+	go h.sendNotifAddNewList(UserID, group.ID, listName)
 	msg := h.createMessage(UserID, `New list is created`)
 	msg.ReplyMarkup = createInlineGetCurGroup(group.ID)
 	return msg, nil
