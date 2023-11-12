@@ -61,6 +61,17 @@ func (h *Hub) getProductList(ChatID int64, lastMsgID, listID int, listName strin
 	return editMsg, nil
 }
 
+func (h *Hub) wantAddNewProduct(chatID int64, products, listName string, lastMsgID int) *tg.EditMessageTextConfig {
+	var text string
+	if products == emptyListMessage {
+		text = addNewProductMessageReply + listName
+	} else {
+		text = products + "\n❓\n" + addNewProductMessageReply + listName
+	}
+	editMsg := h.editMessage(chatID, lastMsgID, text)
+	return editMsg
+}
+
 func (h *Hub) addNewProduct(ChatID int64, Products, listName string) (*tg.MessageConfig, error) {
 	listID, err := h.db.ProductList().GetListID(context.TODO(), listName)
 	if err != nil {
@@ -99,9 +110,15 @@ func (h *Hub) addNewProduct(ChatID int64, Products, listName string) (*tg.Messag
 	return msg, nil
 }
 
-func (h *Hub) createMessageForEditList(ChatID int64, listName string, lastMsgID int) *tg.EditMessageTextConfig {
-	msg := h.editMessage(ChatID, lastMsgID, answerEditListMessage+listName)
-	return msg
+func (h *Hub) createMessageForEditList(ChatID int64, products, listName string, lastMsgID int) *tg.EditMessageTextConfig {
+	if products == emptyListMessage {
+		editMsg := h.editMessage(ChatID, lastMsgID, "It seems that your list is empty 🗿, you have nothing to delete")
+		editMsg.ReplyMarkup = createInlineGoToMenu()
+		return editMsg
+	}
+	text := products + "\n❓\n" + answerEditListMessage + listName
+	editMsg := h.editMessage(ChatID, lastMsgID, text)
+	return editMsg
 }
 
 func (h *Hub) compliteProductList(ChatID int64, productListName string, lastMsgID int) (*tg.EditMessageTextConfig, error) {

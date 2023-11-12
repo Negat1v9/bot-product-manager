@@ -137,19 +137,26 @@ func parseNameGroupAddUser(s string) string {
 	return res
 }
 
-func parseNameListForAddProd(s string) string {
-	res, _ := strings.CutPrefix(s, addNewProductMessageReply)
-	return res
+func parseNameListActions(s string) string {
+	l := len(s) - 1
+	for i := range s {
+		if s[l-i] == ' ' {
+			return s[l-i+1:]
+		}
+	}
+	// res, _ := strings.CutSuffix(s, )
+	// res, _ := strings.CutPrefix(s, addNewProductMessageReply)
+	return " "
 }
 func parseGroupListName(s string) string {
 	res, _ := strings.CutPrefix(s, answerCreateGroupListMsg)
 	return res
 }
 
-func parseListNameEditList(s string) string {
-	res, _ := strings.CutPrefix(s, answerEditListMessage)
-	return res
-}
+// func parseListNameEditList(s string) string {
+// 	res, _ := strings.CutPrefix(s, answerEditListMessage)
+// 	return res
+// }
 
 // Check slice of users and compare with target ID
 func checkUserInGroup(targetUserID int64, users []store.User) bool {

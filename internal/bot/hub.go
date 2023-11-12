@@ -107,8 +107,10 @@ func (h *Hub) CallBackUpdate(cbq *tg.CallbackQuery, timeStart time.Time) error {
 
 	// case isAddNewProduct(cbq.Data):
 	case isWantAddNewProduct:
+		products := cbq.Message.Text
 		listName := parseCallBackOneParam(prefixAddProductList, cbq.Data)
-		editMsg = h.editMessage(cbq.From.ID, cbq.Message.MessageID, addNewProductMessageReply+listName)
+		editMsg = h.wantAddNewProduct(cbq.From.ID, products, listName, cbq.Message.MessageID)
+		// editMsg = h.editMessage(cbq.From.ID, cbq.Message.MessageID, addNewProductMessageReply+listName)
 
 	// case isGetGroupLists(cbq.Data):
 	case isGetAllGroupLists:
@@ -118,8 +120,9 @@ func (h *Hub) CallBackUpdate(cbq *tg.CallbackQuery, timeStart time.Time) error {
 
 	// case isEditProductList(cbq.Data):
 	case isWantEditList:
+		products := cbq.Message.Text
 		groupName := parseCallBackOneParam(prefixChangeList, cbq.Data)
-		editMsg = h.createMessageForEditList(cbq.From.ID, groupName, cbq.Message.MessageID)
+		editMsg = h.createMessageForEditList(cbq.From.ID, products, groupName, cbq.Message.MessageID)
 
 	// case isCreateGroupList(cbq.Data):
 	case isWantCreateGroupList:
@@ -252,12 +255,12 @@ func (h *Hub) isForwardMessage(msg *tg.Message, timeStart time.Time) error {
 		res, err = h.createList(msg.Chat.ID, list)
 
 	case isAddNewProductForward(text):
-		listName := parseNameListForAddProd(text)
+		listName := parseNameListActions(text)
 
 		res, err = h.addNewProduct(msg.Chat.ID, msg.Text, listName)
 
 	case isEditListForward(text):
-		listName := parseListNameEditList(text)
+		listName := parseNameListActions(text)
 		indexToDelete := parseIndexEditProduct(msg.Text)
 		res, err = h.editProductList(msg.From.ID, listName, indexToDelete)
 

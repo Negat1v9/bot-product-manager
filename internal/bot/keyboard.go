@@ -44,11 +44,11 @@ func createProductsInline(listName string) *tg.InlineKeyboardMarkup {
 	keyboard := tg.NewInlineKeyboardMarkup(
 		tg.NewInlineKeyboardRow(
 			tg.NewInlineKeyboardButtonData(
-				"add", *createCallBackOneParam(prefixAddProductList, listName)),
+				"⭐ add", *createCallBackOneParam(prefixAddProductList, listName)),
 			tg.NewInlineKeyboardButtonData(
-				"change", *createCallBackOneParam(prefixChangeList, listName)),
+				"🆑 delete", *createCallBackOneParam(prefixChangeList, listName)),
 			tg.NewInlineKeyboardButtonData(
-				"complite", *createCallBackOneParam(prefixCompliteList, listName)),
+				"✅ complite", *createCallBackOneParam(prefixCompliteList, listName)),
 		),
 		tg.NewInlineKeyboardRow(
 			tg.NewInlineKeyboardButtonData(

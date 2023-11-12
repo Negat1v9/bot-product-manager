@@ -9,7 +9,7 @@ import (
 
 func createMessageProductList(p []string) string {
 	s := make([]byte, 0)
-	row := "Youre list\n"
+	row := "Youre product list 📋\n"
 	s = append(s, row...)
 	for i, product := range p {
 		row = strconv.Itoa(i+1) + ". "
@@ -21,7 +21,7 @@ func createMessageProductList(p []string) string {
 
 func createMessageSuccessAddedProduct(p []string) string {
 	s := []byte{}
-	row := "Success Added:\n"
+	row := "Success Added ✅\n"
 	s = append(s, row...)
 	for _, v := range p {
 		row = v + "\n"

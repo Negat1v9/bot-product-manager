@@ -63,6 +63,7 @@ func (h *Hub) inviteNewUser(ChatID int64, newUserName, groupName string) (*tg.Me
 	if err != nil {
 		if err == userAlredyGroupError {
 			msg := h.createMessage(ChatID, err.Error())
+			msg.ReplyMarkup = createInlineGetCurGroup(group.ID)
 			return msg, nil
 		}
 		// send invited message for forward
@@ -72,6 +73,7 @@ func (h *Hub) inviteNewUser(ChatID int64, newUserName, groupName string) (*tg.Me
 		}
 	}
 	msg := h.createMessage(ChatID, inviteSendMessage)
+	msg.ReplyMarkup = createInlineGetCurGroup(group.ID)
 	return msg, nil
 }
 

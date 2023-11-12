@@ -25,7 +25,8 @@ func isCreateNameForward(s string) bool {
 // // PRODUCTS FILTERS
 
 func isAddNewProductForward(s string) bool {
-	return strings.HasPrefix(s, addNewProductMessageReply)
+	return strings.Contains(s, addNewProductMessageReply)
+	// return strings.HasPrefix(s, addNewProductMessageReply)
 }
 
 // func isAddNewProduct(s string) bool {
@@ -47,7 +48,7 @@ func isAddNewProductForward(s string) bool {
 //		return strings.HasPrefix(s, prefixChangeList)
 //	}
 func isEditListForward(s string) bool {
-	return strings.HasPrefix(s, answerEditListMessage)
+	return strings.Contains(s, answerEditListMessage)
 }
 
 // // Info: is get group to merge list
