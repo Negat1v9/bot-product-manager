@@ -123,7 +123,12 @@ func (h *Hub) CallBackUpdate(cbq *tg.CallbackQuery, timeStart time.Time) error {
 	case isWantAddNewProduct:
 		products := cbq.Message.Text
 		listName := parseCallBackOneParam(prefixAddProductList, cbq.Data)
-		editMsg = h.wantAddNewProduct(cbq.From.ID, products, listName, cbq.Message.MessageID)
+		editMsg = h.wantAddNewProduct(cbq.From.ID, products, listName, cbq.Message.MessageID, false)
+		// TODO:
+	case isWantAddProductGroupList:
+		products := cbq.Message.Text
+		listName := parseCallBackOneParam(prefixAddProductGroup, cbq.Data)
+		editMsg = h.wantAddNewProduct(cbq.From.ID, products, listName, cbq.Message.MessageID, true)
 
 	case isGetAllGroupLists:
 		data := parseCallBackOneParam(prefixCallBackListGroup, cbq.Data)
@@ -143,7 +148,12 @@ func (h *Hub) CallBackUpdate(cbq *tg.CallbackQuery, timeStart time.Time) error {
 	case isWantEditList:
 		products := cbq.Message.Text
 		groupName := parseCallBackOneParam(prefixChangeList, cbq.Data)
-		editMsg = h.createMessageForEditList(cbq.From.ID, products, groupName, cbq.Message.MessageID)
+		editMsg = h.createMessageForEditList(cbq.From.ID, products, groupName, cbq.Message.MessageID, false)
+		// TODO:
+	case isWantEditGroupList:
+		products := cbq.Message.Text
+		groupName := parseCallBackOneParam(prefixChangeGroupList, cbq.Data)
+		editMsg = h.createMessageForEditList(cbq.From.ID, products, groupName, cbq.Message.MessageID, true)
 
 	case isWantCreateGroupList:
 		data := parseCallBackOneParam(prefixCreateGroupList, cbq.Data)
@@ -286,12 +296,21 @@ func (h *Hub) isForwardMessage(msg *tg.Message, timeStart time.Time) error {
 	case isAddNewProductForward(text):
 		listName := parseNameListActions(text)
 
-		res, err = h.addNewProduct(msg.Chat.ID, msg.Text, listName)
+		res, err = h.addNewProduct(msg.Chat.ID, msg.Text, listName, false)
+
+	case isAddNewProductGroupForward(text):
+		listName := parseNameListActions(text)
+		res, err = h.addNewProduct(msg.Chat.ID, msg.Text, listName, true)
 
 	case isEditListForward(text):
 		listName := parseNameListActions(text)
 		indexToDelete := parseIndexEditProduct(msg.Text)
-		res, err = h.editProductList(msg.From.ID, listName, indexToDelete)
+		res, err = h.editProductList(msg.From.ID, listName, indexToDelete, false)
+
+	case isEditGroupListForward(text):
+		listName := parseNameListActions(text)
+		indexToDelete := parseIndexEditProduct(msg.Text)
+		res, err = h.editProductList(msg.From.ID, listName, indexToDelete, false)
 
 	case isCreateNewGroupForward(text):
 		managerGroup := &store.GroupInfo{

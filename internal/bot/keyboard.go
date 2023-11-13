@@ -69,9 +69,9 @@ func createInlineProductsGroup(listName string, listID int) *tg.InlineKeyboardMa
 	keyboard := tg.NewInlineKeyboardMarkup(
 		tg.NewInlineKeyboardRow(
 			tg.NewInlineKeyboardButtonData(
-				"⭐ Add", *createCallBackOneParam(prefixAddProductList, listName)),
+				"⭐ Add", *createCallBackOneParam(prefixAddProductGroup, listName)),
 			tg.NewInlineKeyboardButtonData(
-				"🆑 Delete", *createCallBackOneParam(prefixChangeList, listName)),
+				"🆑 Delete", *createCallBackOneParam(prefixChangeGroupList, listName)),
 			tg.NewInlineKeyboardButtonData(
 				"✅ Complite", *createCallBackFewParam(prefixWantCompliteList, sListID, listName)),
 		),

@@ -18,6 +18,8 @@ const (
 
 	// send user message to reply with new products
 	isWantAddNewProduct
+	// is user want add new product at group list
+	isWantAddProductGroupList
 	// user replyed on message with new products
 	isAddNewProduct // message
 	// get all lists names
@@ -38,6 +40,8 @@ const (
 	isSaveTemplete
 	// send user message to reply with idited nums pruducts
 	isWantEditList
+	// is want edit group list
+	isWantEditGroupList
 	// user replyed on message with nums products to edit
 	isEditList // message
 	// send message with groups name to merge list

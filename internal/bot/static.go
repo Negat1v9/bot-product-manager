@@ -23,6 +23,7 @@ var (
 	prefixCallBackListProduct      = "IDNAME@"
 	prefixCallBackGroupProductList = "GRIDNAME@"
 	prefixAddProductList           = "add@"
+	prefixAddProductGroup          = "addGroup@"
 	prefixGetUserList              = "getlist"
 	prefixGetGroupLists            = "getGroups"
 	prefixWantCompliteList         = "wantComplite@"
@@ -30,6 +31,7 @@ var (
 	prefixCompliteSoloList         = "compliteSolo@"
 	prefixSaveAsTemplete           = "saveTemplete@"
 	prefixChangeList               = "change@"
+	prefixChangeGroupList          = "changeGroup@"
 	prefixToMergeListGroup         = "toMerge@"
 	prefixMergeListWithGroup       = "mergeListGrIDListID@"
 	prefixCreateGroup              = "create_group"
@@ -57,11 +59,13 @@ var prefixsMap = map[string]int{
 	prefixCallBackListProduct:      isGetProductList,
 	prefixCallBackGroupProductList: isGetGroupProductList,
 	prefixAddProductList:           isWantAddNewProduct,
+	prefixAddProductGroup:          isWantAddProductGroupList,
 	prefixGetUserList:              isGetLists,
 	prefixGetGroupLists:            isGetGroupLists,
 	prefixCompliteList:             isCompliteList,
 	prefixCompliteSoloList:         isCompliteSoloList,
 	prefixChangeList:               isWantEditList,
+	prefixChangeGroupList:          isWantEditGroupList,
 	prefixToMergeListGroup:         isWantMergeList,
 	prefixMergeListWithGroup:       isMergeListGroup,
 	prefixCreateGroup:              isWantCreateGroup,
@@ -90,8 +94,10 @@ var (
 	createGroupMessage        = "Swipe to left ⏪ this message with the name of your group and it will be created"
 	answerCreateListMsg       = "To create a new sheet, simply swipe to left ⏪ this message with the name of the list."
 	addNewProductMessageReply = "Swipe to left ⏪ this message with names of the new products with a sign '.' or ','\nto add new products to the list - "
+	addNewProductAtGroupList  = "Swipe to left ⏪ this message with names of the new products with a sign '.' or ','\nto add new products to the group list - "
 	answerCreateGroupListMsg  = "Swipe to left ⏪ this message with new name group\nto create a list for the group -"
 	answerEditListMessage     = `Swipe to left ⏪ this message with nums products with through the sign '.' or ',', what you want delete from - `
+	answerEditGroupList       = `Swipe to left ⏪ this message with nums products with through the sign '.' or ',', what you want delete from group list - `
 	textForInvitingNewUser    = `Swipe to left ⏪ message with the name of the user you want to invite - `
 )
 
