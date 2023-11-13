@@ -83,59 +83,94 @@ func (h *Hub) CallBackUpdate(cbq *tg.CallbackQuery, timeStart time.Time) error {
 	CBType := h.getCallBackType(cbq.Data)
 	switch CBType {
 
-	// case isUserChoiceLists(cbq.Data):
 	case isGetLists:
 		editMsg, err = h.getListName(cbq.From.ID, cbq.Message.MessageID)
 
-	// case isUserChoiceGroupLists(cbq.Data):
+	case isGetGroupProductList:
+		data := parseCallBackFewParam(prefixCallBackGroupProductList, cbq.Data)
+		listID, listName := convSToI[int](data[0], 0), data[1]
+		editMsg, err = h.getProductList(cbq.From.ID, cbq.Message.MessageID, listID, listName, true)
+
 	case isGetGroupLists:
 		editMsg, err = h.GetAllUserGroup(cbq.From.ID, cbq.Message.MessageID)
 
-	// case isCreateList(cbq.Data):
 	case isWantCreateList:
 		editMsg = h.createMsgToCreateList(cbq.From.ID, cbq.Message.MessageID)
 
-	// case isCreateGroup(cbq.Data):
 	case isWantCreateGroup:
 		editMsg, err = h.createMessageForNewGroup(cbq.From.ID, cbq.Message.MessageID)
 
-	// case isGetProductList(cbq.Data):
 	case isGetProductList:
 		data := parseCallBackFewParam(prefixCallBackListProduct, cbq.Data)
 		listID, listName := convSToI[int](data[0], 0), data[1]
-		editMsg, err = h.getProductList(cbq.From.ID, cbq.Message.MessageID, listID, listName)
+		editMsg, err = h.getProductList(cbq.From.ID, cbq.Message.MessageID, listID, listName, false)
 
-	// case isAddNewProduct(cbq.Data):
+	case isWantConnectTemplate:
+		data := parseCallBackFewParam(prefixWantConnectTemplate, cbq.Data)
+		groupID, newListID := convSToI[int](data[0], 0), convSToI[int](data[1], 0)
+		editMsg, err = h.getTemplatesForConnect(cbq.From.ID, groupID, newListID, cbq.Message.MessageID)
+
+	case isGetTemplateForConnect:
+		data := parseCallBackFewParam(prefixGetListForTemplateMerge, cbq.Data)
+		listID, sNewID, sGrID := convSToI[int](data[0], 0), data[1], data[2]
+		editMsg, err = h.getOneTemplateForConnect(cbq.From.ID, sNewID, sGrID, listID, cbq.Message.MessageID)
+
+	case isConnectTemplate:
+		data := parseCallBackFewParam(prefixConnectTemplate, cbq.Data)
+		listID, newID, grID := convSToI[int](data[0], 0), convSToI[int](data[1], 0), convSToI[int](data[2], 0)
+		editMsg, err = h.connectTemplate(cbq.From.ID, grID, listID, newID, cbq.Message.MessageID)
+
 	case isWantAddNewProduct:
 		products := cbq.Message.Text
 		listName := parseCallBackOneParam(prefixAddProductList, cbq.Data)
 		editMsg = h.wantAddNewProduct(cbq.From.ID, products, listName, cbq.Message.MessageID)
-		// editMsg = h.editMessage(cbq.From.ID, cbq.Message.MessageID, addNewProductMessageReply+listName)
 
-	// case isGetGroupLists(cbq.Data):
 	case isGetAllGroupLists:
 		data := parseCallBackOneParam(prefixCallBackListGroup, cbq.Data)
 		groupID := convSToI[int](data, 0)
 		editMsg, err = h.GetGroupLists(cbq.From.ID, cbq.Message.MessageID, groupID)
 
-	// case isEditProductList(cbq.Data):
+	case isGetGroupTemplates:
+		data := parseCallBackOneParam(prefixGetGroupTemplates, cbq.Data)
+		groupID := convSToI[int](data, 0)
+		editMsg, err = h.getAllGroupTemplates(cbq.From.ID, groupID, cbq.Message.MessageID)
+
+	case isGetOneGroupTemplate:
+		data := parseCallBackFewParam(prefixGetOneTemplate, cbq.Data)
+		listID, listName, sGroupID := convSToI[int](data[0], 0), data[1], data[2]
+		editMsg, err = h.getOneGroupTemplate(cbq.From.ID, sGroupID, listName, listID, cbq.Message.MessageID)
+
 	case isWantEditList:
 		products := cbq.Message.Text
 		groupName := parseCallBackOneParam(prefixChangeList, cbq.Data)
 		editMsg = h.createMessageForEditList(cbq.From.ID, products, groupName, cbq.Message.MessageID)
 
-	// case isCreateGroupList(cbq.Data):
 	case isWantCreateGroupList:
 		data := parseCallBackOneParam(prefixCreateGroupList, cbq.Data)
 		groupID := convSToI[int](data, 0)
 		editMsg, err = h.createMessageCreateGroupList(cbq.From.ID, groupID, cbq.Message.MessageID)
 
-	// case isCompliteProductList(cbq.Data):
-	case isCompliteList:
-		listName := parseCallBackOneParam(prefixCompliteList, cbq.Data)
-		editMsg, err = h.compliteProductList(cbq.From.ID, listName, cbq.Message.MessageID)
+	case isCompliteSoloList:
+		data := parseCallBackFewParam(prefixCompliteSoloList, cbq.Data)
+		listID, listName := convSToI[int](data[0], 0), data[1]
+		editMsg, err = h.compliteProductList(cbq.From.ID, listName, listID, cbq.Message.MessageID)
 
-	// case isWantMergeList(cbq.Data):
+	case isWantCompliteList:
+		products := cbq.Message.Text
+		data := parseCallBackFewParam(prefixWantCompliteList, cbq.Data)
+		listID, listName := convSToI[int](data[0], 0), data[1]
+		editMsg, err = h.wantCompliteList(cbq.From.ID, listName, products, listID, cbq.Message.MessageID)
+
+	case isCompliteList:
+		data := parseCallBackFewParam(prefixCompliteList, cbq.Data)
+		listID, listName := convSToI[int](data[0], 0), data[1]
+		editMsg, err = h.compliteProductList(cbq.From.ID, listName, listID, cbq.Message.MessageID)
+
+	case isSaveTemplete:
+		data := parseCallBackOneParam(prefixSaveAsTemplete, cbq.Data)
+		listID := convSToI[int](data, 0)
+		editMsg, err = h.saveAsTemplate(cbq.From.ID, listID, cbq.Message.MessageID)
+
 	case isWantMergeList:
 		listName := parseCallBackOneParam(prefixToMergeListGroup, cbq.Data)
 		editMsg, err = h.getNameGroupMergeList(cbq.From.ID, listName, cbq.Message.MessageID)
@@ -143,7 +178,6 @@ func (h *Hub) CallBackUpdate(cbq *tg.CallbackQuery, timeStart time.Time) error {
 	case isGetMainMenu:
 		editMsg = h.getMainMenu(cbq.From.ID, cbq.Message.MessageID)
 
-	// case isMergeListGroup(cbq.Data):
 	case isMergeListGroup:
 		data := parseCallBackFewParam(prefixMergeListWithGroup, cbq.Data)
 		groupID, listID := convSToI[int](data[0], 0), convSToI[int](data[1], 0)
@@ -164,31 +198,26 @@ func (h *Hub) CallBackUpdate(cbq *tg.CallbackQuery, timeStart time.Time) error {
 		groupID := convSToI[int](data, 0)
 		editMsg, err = h.getUserFromGroup(cbq.From.ID, cbq.Message.MessageID, groupID)
 
-	// case isGetUsersForDelGroup(cbq.Data):
 	case isGetUsersToDelete:
 		data := parseCallBackOneParam(prefixGetUserToDelete, cbq.Data)
 		groupID := convSToI[int](data, 0)
 		editMsg, err = h.getUserForDeleteFrGr(cbq.From.ID, cbq.Message.MessageID, groupID)
 
-	// case isAddNewUserGroup(cbq.Data):
 	case isWantInviteNewUser:
 		data := parseCallBackOneParam(prefixAddUserGroup, cbq.Data)
 		groupID := convSToI[int](data, 0)
 		editMsg, err = h.createMessageForInviteUser(cbq.From.ID, groupID, cbq.Message.MessageID)
 
-	// case isUserReadyInvite(cbq.Data):
 	case isUserReadyJoinGroup:
 		data := parseCallBackFewParam(prefixCallBackInsertUserGroup, cbq.Data)
 		userID, groupID := convSToI[int64](data[0], 64), convSToI[int](data[1], 0)
 		msg, err = h.userReadyJoinGroup(userID, groupID)
 
-	// case isUserRefuseInvite(cbq.Data):
 	case isUserRefusedGroup:
 		data := parseCallBackFewParam(prefixCallBackRefuseUserGroup, cbq.Data)
 		userID, groupID := convSToI[int64](data[0], 64), convSToI[int](data[1], 0)
 		msg, err = h.userRefuseJoinGroup(userID, cbq.From.UserName, groupID)
 
-	// case isDeleteUserFromGroup(cbq.Data):
 	case isDeleteUserFromGroup:
 		data := parseCallBackFewParam(prefixCallBackDelUserFromGr, cbq.Data)
 		userID, groupID := convSToI[int64](data[0], 64), convSToI[int](data[1], 0)

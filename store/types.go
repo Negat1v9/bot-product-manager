@@ -36,7 +36,9 @@ type GroupRepo interface {
 // NOTE: Merge ProductList and Product Repositories
 type ProductListRepo interface {
 	MergeListGroup(ctx context.Context, listID, groupID int) error
-	Create(ctx context.Context, p *ProductList) error
+	SaveListAsTemplate(ctx context.Context, listID int) error
+	GetAllGroupTemplates(ctx context.Context, groupID int) ([]ProductList, error)
+	Create(ctx context.Context, p *ProductList) (int, error)
 	GetListID(ctx context.Context, listName string) (int, error)
 	GetAll(ctx context.Context, UserID int64) ([]ProductList, error)
 	Delete(ctx context.Context, listID int) error

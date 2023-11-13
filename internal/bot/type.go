@@ -13,6 +13,8 @@ const (
 	isCreateNewList // message
 	// is get list with products
 	isGetProductList
+	// is get group list
+	isGetGroupProductList
 
 	// send user message to reply with new products
 	isWantAddNewProduct
@@ -22,8 +24,18 @@ const (
 	isGetLists
 	// get all groups names
 	isGetGroupLists
+	// get in group all templates what was saved
+	isGetGroupTemplates
+	// get one group template for edit
+	isGetOneGroupTemplate
+	// user want complite group list and he receive choice save template
+	isWantCompliteList
 	// complite list
 	isCompliteList
+	// complite solo list without chance save template
+	isCompliteSoloList
+	// user want choice save list as template
+	isSaveTemplete
 	// send user message to reply with idited nums pruducts
 	isWantEditList
 	// user replyed on message with nums products to edit
@@ -32,6 +44,12 @@ const (
 	isWantMergeList
 	// user select groups name to merge list
 	isMergeListGroup
+	// user after creation list choice merge with template
+	isWantConnectTemplate
+	// get template list for merging with new list
+	isGetTemplateForConnect
+	// user choice is connect Merge new list with template
+	isConnectTemplate
 
 	// is send message to reply with new groups name
 	isWantCreateGroup

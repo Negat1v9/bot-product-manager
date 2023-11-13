@@ -34,19 +34,13 @@ func (r *ProductRepo) Add(ctx context.Context, p store.Product) error {
 	if err != nil {
 		return err
 	}
-	var id *int
-	stmt := `UPDATE product
-			SET products=? 
-			WHERE list_id=?
-			RETURNING id;`
+	stmt := `UPDATE product SET products=? WHERE list_id=?;`
 
-	err = r.storage.db.QueryRowContext(ctx, stmt, productsString, p.ListID).Scan(&id)
+	_, err = r.storage.db.ExecContext(ctx, stmt, productsString, p.ListID)
 	if err != nil {
 		return err
 	}
-	// if id == nil {
-	// 	return
-	// }
+
 	return nil
 }
 
@@ -54,7 +48,7 @@ func (r *ProductRepo) GetAll(ctx context.Context, listID int) (*store.Product, e
 	var products string
 	var p store.Product
 	err := r.storage.db.QueryRowContext(ctx,
-		`SELECT id, list_id, products FROM product WHERE list_id=?`,
+		`SELECT id, list_id, products FROM product WHERE list_id=?;`,
 		listID,
 	).Scan(&p.ID, &p.ListID, &products)
 	if err != nil {
@@ -83,10 +77,10 @@ func (r *ProductRepo) Delete(ctx context.Context, productID int) error {
 }
 
 func (r *ProductRepo) ConvertStringProduct(s string) ([]string, error) {
-	var items []string
+	items := make([]string, 0)
 	err := json.Unmarshal([]byte(s), &items)
 	if err != nil {
-		return nil, err
+		return []string{}, nil
 	}
 	return items, nil
 }

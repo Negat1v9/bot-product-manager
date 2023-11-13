@@ -16,7 +16,7 @@ func (h *Hub) createMsgToCreateList(ChatID int64, lastMsgID int) *tg.EditMessage
 // Info: Create list in database, and answer with new list name
 func (h *Hub) createList(ChatID int64, list *store.ProductList) (*tg.MessageConfig, error) {
 
-	err := h.db.ProductList().Create(context.TODO(), list)
+	_, err := h.db.ProductList().Create(context.TODO(), list)
 	if err != nil {
 		return nil, err
 	}
@@ -43,21 +43,27 @@ func (h *Hub) getListName(chatID int64, lastMsgID int) (editMsg *tg.EditMessageT
 	return editMsg, nil
 }
 
-func (h *Hub) getProductList(ChatID int64, lastMsgID, listID int, listName string) (*tg.EditMessageTextConfig, error) {
+func (h *Hub) getProductList(ChatID int64, lastMsgID, listID int, listName string, isGroup bool) (editMsg *tg.EditMessageTextConfig, err error) {
 	product, err := h.db.Product().GetAll(context.TODO(), listID)
 	if err != nil {
 		if err == store.NoRowProductError {
-			editMsg := h.editMessage(ChatID, lastMsgID, emptyListMessage)
-			editMsg.ReplyMarkup = createProductsInline(listName)
-			return editMsg, nil
+			editMsg = h.editMessage(ChatID, lastMsgID, emptyListMessage)
 
+		} else {
+			return nil, err
 		}
-		return nil, err
-	}
-	text := createMessageProductList(product.Products)
-	editMsg := h.editMessage(ChatID, lastMsgID, text)
 
-	editMsg.ReplyMarkup = createProductsInline(listName)
+	} else if len(product.Products) == 0 {
+		editMsg = h.editMessage(ChatID, lastMsgID, emptyListMessage)
+	} else {
+		text := createMessageProductList(product.Products)
+		editMsg = h.editMessage(ChatID, lastMsgID, text)
+	}
+	if isGroup {
+		editMsg.ReplyMarkup = createInlineProductsGroup(listName, listID)
+	} else {
+		editMsg.ReplyMarkup = createProductsInline(listName, listID)
+	}
 	return editMsg, nil
 }
 
@@ -121,16 +127,36 @@ func (h *Hub) createMessageForEditList(ChatID int64, products, listName string, 
 	return editMsg
 }
 
-func (h *Hub) compliteProductList(ChatID int64, productListName string, lastMsgID int) (*tg.EditMessageTextConfig, error) {
-	listID, err := h.db.ProductList().GetListID(context.TODO(), productListName)
+func (h *Hub) wantCompliteList(chatID int64, listName, products string, listID, lastMsgID int) (*tg.EditMessageTextConfig, error) {
+	if products == emptyListMessage {
+		editMsg, err := h.compliteProductList(chatID, listName, listID, lastMsgID)
+		if err != nil {
+			return nil, err
+		}
+		return editMsg, nil
+	}
+	editMsg := h.editMessage(chatID, lastMsgID, getChoiceSaveTemplate)
+	editMsg.ReplyMarkup = createInlineAfterComplite(listID, listName)
+	return editMsg, nil
+}
+
+func (h *Hub) compliteProductList(ChatID int64, listName string, listID, lastMsgID int) (*tg.EditMessageTextConfig, error) {
+
+	err := h.db.ProductList().Delete(context.TODO(), listID)
 	if err != nil {
 		return nil, err
 	}
-	err = h.db.ProductList().Delete(context.TODO(), listID)
+	editMsg := h.editMessage(ChatID, lastMsgID, isCompletesProductListMsg+listName)
+	editMsg.ReplyMarkup = createInlineGoToMenu()
+	return editMsg, nil
+}
+
+func (h *Hub) saveAsTemplate(chatID int64, listID, lastMsgID int) (*tg.EditMessageTextConfig, error) {
+	err := h.db.ProductList().SaveListAsTemplate(context.TODO(), listID)
 	if err != nil {
 		return nil, err
 	}
-	editMsg := h.editMessage(ChatID, lastMsgID, isCompletesProductListMsg+productListName)
+	editMsg := h.editMessage(chatID, lastMsgID, "🟢 The list was successfully saved as an example 💥")
 	editMsg.ReplyMarkup = createInlineGoToMenu()
 	return editMsg, nil
 }
@@ -148,12 +174,16 @@ func (h *Hub) editProductList(chatID int64, listName string, indexProducts map[i
 
 	err = h.db.Product().Add(context.TODO(), *products)
 	if err != nil {
-		// TODO: Not deleted
 		return nil, err
 	}
-	text := createMessageProductList(products.Products)
+	var text string
+	if len(products.Products) == 0 {
+		text = emptyListMessage
+	} else {
+		text = createMessageProductList(products.Products)
+	}
 	msg := h.createMessage(chatID, text)
-	msg.ReplyMarkup = createProductsInline(listName)
+	msg.ReplyMarkup = createProductsInline(listName, listID)
 	return msg, nil
 }
 

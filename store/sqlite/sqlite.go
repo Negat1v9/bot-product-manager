@@ -70,6 +70,7 @@ func (s *Store) CreateTables() error {
 		owner_id INTEGER,
 		group_id INTEGER,
 		name TEXT NOT NULL,
+		is_template TEXT DEFALUT NULL,
 		CONSTRAINT fk_product_list_1
 			FOREIGN KEY (owner_id)
 			REFERENCES users(id)
