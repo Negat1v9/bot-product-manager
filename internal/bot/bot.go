@@ -50,8 +50,8 @@ func (b *Bot) Start(dbURL string) error {
 	if err != nil {
 		return err
 	}
-
-	b.hub = NewHub(store, b.output)
+	container := NewContainer()
+	b.hub = NewHub(store, container, b.output)
 
 	configBot := tgbotapi.NewUpdate(b.offset)
 
@@ -104,7 +104,7 @@ func (b *Bot) MessageSender() error {
 	for {
 		select {
 		case msg := <-b.output:
-			if msg.Msg == nil && msg.EditMesage == nil {
+			if msg.Msg == nil && msg.EditMesage == nil && msg.EditReplyMarkup == nil {
 				b.logger.Error("response nil message, message can`t be send")
 				continue
 			}
@@ -115,6 +115,13 @@ func (b *Bot) MessageSender() error {
 				}()
 				if msg.EditMesage != nil {
 					if _, err := b.client.Send(msg.EditMesage); err != nil {
+						b.logger.Error("not sended edit message",
+							slog.String("error", err.Error()))
+					}
+					return
+				}
+				if msg.EditReplyMarkup != nil {
+					if _, err := b.client.Send(msg.EditReplyMarkup); err != nil {
 						b.logger.Error("not sended edit message",
 							slog.String("error", err.Error()))
 					}
@@ -132,7 +139,7 @@ func (b *Bot) MessageSender() error {
 	}
 }
 func (b *Bot) skipLastUpdates(updates tgbotapi.UpdatesChannel) {
-	timer := time.NewTicker(time.Second * timeForSkipUpdates)
+	timer := time.NewTimer(time.Second * timeForSkipUpdates)
 	end := make(chan struct{})
 	go func() {
 		count := 1

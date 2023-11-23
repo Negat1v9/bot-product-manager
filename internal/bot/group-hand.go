@@ -22,6 +22,7 @@ func (h *Hub) createMessageForNewGroup(ChatID int64, lastMsgID int) (*tg.EditMes
 }
 
 func (h *Hub) createNewGroup(ChatID int64, managerGroup *store.GroupInfo) (*tg.MessageConfig, error) {
+	managerGroup.GroupName = makeNameClear(managerGroup.GroupName)
 	id, err := h.db.ManagerGroup().Create(context.TODO(), managerGroup)
 	if err != nil {
 		return nil, err

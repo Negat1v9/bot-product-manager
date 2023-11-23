@@ -36,19 +36,24 @@ type GroupRepo interface {
 // NOTE: Merge ProductList and Product Repositories
 type ProductListRepo interface {
 	MergeListGroup(ctx context.Context, listID, groupID int) error
-	SaveListAsTemplate(ctx context.Context, listID int) error
-	GetAllGroupTemplates(ctx context.Context, groupID int) ([]ProductList, error)
 	Create(ctx context.Context, p *ProductList) (int, error)
 	GetListID(ctx context.Context, listName string) (int, error)
 	GetAll(ctx context.Context, UserID int64) ([]ProductList, error)
+	GetGroupListByID(ctx context.Context, listID int) (ProductList, error)
+	MakeListInactive(ctx context.Context, listID int) error
+	MakeListActive(ctx context.Context, listID int) (string, error)
 	Delete(ctx context.Context, listID int) error
 }
 
 type ProductRepo interface {
-	Create(ctx context.Context, listID int) error
-	GetAll(ctx context.Context, listID int) (*Product, error)
+	Create(ctx context.Context, p *Product) error
+	GetAllProducts(ctx context.Context, listID int) (*Product, error)
 	Add(ctx context.Context, p Product) error
-	Delete(ctx context.Context, productID int) error
+	// Delete(ctx context.Context, ID int) error
+	ConvertStringProduct(s string) ([]string, error)
+	ConvertProductString(p []string) (string, error)
+	ConvertEditorsString(e []Editors) (string, error)
+	ConvertStringEditors(s string) ([]Editors, error)
 }
 
 type User struct {
@@ -81,7 +86,14 @@ type ProductList struct {
 type Product struct {
 	ID       int
 	ListID   int
+	ListName string
 	Products []string
+	Editors  []Editors
+}
+
+type Editors struct {
+	User            User
+	ManyAddProducts int
 }
 
 type GroupList struct {

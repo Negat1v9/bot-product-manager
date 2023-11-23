@@ -7,6 +7,9 @@ import (
 	tg "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
+// Info: for delay send msg to all users in group with message complited list
+// var delayComlitedList = make(map[int]bool)
+
 // Info: Send edit message with all current group lists
 func (h *Hub) GetGroupLists(UserID int64, lastMsgID, groupID int) (editMsg *tg.EditMessageTextConfig, err error) {
 	groupList, err := h.db.ManagerGroup().AllByGroupID(context.TODO(), groupID)
@@ -24,31 +27,24 @@ func (h *Hub) GetGroupLists(UserID int64, lastMsgID, groupID int) (editMsg *tg.E
 	return editMsg, nil
 }
 
-func (h *Hub) getAllGroupTemplates(chatID int64, groupID, lastMsgID int) (*tg.EditMessageTextConfig, error) {
-	lists, err := h.db.ProductList().GetAllGroupTemplates(context.TODO(), groupID)
-	if err != nil {
-		return nil, err
-	}
-	editMsg := h.editMessage(chatID, lastMsgID, "select a template to edit it 📄")
-	editMsg.ReplyMarkup = createInlineGroupListTemplates(lists, groupID)
-	return editMsg, nil
-}
-
-func (h *Hub) getOneGroupTemplate(chatID int64, sGroupID, listName string, listID, lastMsgID int) (*tg.EditMessageTextConfig, error) {
-	products, err := h.db.Product().GetAll(context.TODO(), listID)
+func (h *Hub) getGroupList(chatID int64, lastMsgID, listID int, listName string) (em *tg.EditMessageTextConfig, err error) {
+	product, err := h.db.Product().GetAllProducts(context.TODO(), listID)
 	if err != nil {
 		if err == store.NoRowProductError {
-			// If list is empty notify user about this
-			editMsg := h.editMessage(chatID, lastMsgID, emptyListMessage)
-			editMsg.ReplyMarkup = createInlineTemplateActions(listID, listName, sGroupID)
-			return editMsg, nil
+			em = h.editMessage(chatID, lastMsgID, emptyListMessage)
 
+		} else {
+			return nil, err
 		}
-		return nil, err
+
+	} else if len(product.Products) == 0 {
+		em = h.editMessage(chatID, lastMsgID, emptyListMessage)
+	} else {
+		text := createMessageProductList(product.Products)
+		em = h.editMessage(chatID, lastMsgID, text)
 	}
-	editMsg := h.editMessage(chatID, lastMsgID, createMessageProductList(products.Products))
-	editMsg.ReplyMarkup = createInlineTemplateActions(listID, listName, sGroupID)
-	return editMsg, nil
+	em.ReplyMarkup = createInlineProductsGroup(listName, listID)
+	return em, nil
 }
 
 // Info: Create message with info for reply message to create new group list
@@ -67,73 +63,49 @@ func (h *Hub) createGroupList(UserID int64, listName, groupName string) (*tg.Mes
 	if err != nil {
 		return nil, err
 	}
+	clearNameList := makeNameClear(listName)
 	list := &store.ProductList{
 		OwnerID: &UserID,
 		GroupID: &group.ID,
-		Name:    &listName,
+		Name:    &clearNameList,
 	}
 	id, err := h.db.ProductList().Create(context.TODO(), list)
 	if err != nil {
 		return nil, err
 	}
-	go h.sendNotifAddNewList(UserID, group.ID, listName)
-	msg := h.createMessage(UserID, getInformationMergeTemplateMsg)
-	msg.ReplyMarkup = createInlineAfterListCreated(group.ID, id)
+	go h.sendNotifAddNewList(UserID, group.ID, groupName)
+	msg := h.createMessage(UserID, clearNameList+" created successfully ✅")
+
+	msg.ReplyMarkup = createInlineGetCurGroupList(id, listName)
 	return msg, nil
 }
 
-func (h *Hub) getTemplatesForConnect(chatID int64, groupID, newListID, lastMsgID int) (*tg.EditMessageTextConfig, error) {
-	lists, err := h.db.ProductList().GetAllGroupTemplates(context.TODO(), groupID)
-	if err != nil {
-		return nil, err
-	}
-	editMsg := h.editMessage(chatID, lastMsgID, "select template for connect ♻")
-	editMsg.ReplyMarkup = createInlineTemplateForConnect(lists, groupID, newListID)
-	return editMsg, nil
-}
+func (h *Hub) recoverGroupList(chatID int64, listID, groupID, lastMsgID int, text, listName string) (msg *tg.MessageConfig, err error) {
+	if h.container.isInContainerList(listID) {
 
-func (h *Hub) getOneTemplateForConnect(chatID int64, sNewID, sGrID string, listID, lastMsgID int) (*tg.EditMessageTextConfig, error) {
-	products, err := h.db.Product().GetAll(context.TODO(), listID)
-	if err != nil {
-		return nil, err
-	}
-	text := createMessageProductList(products.Products)
-	editMsg := h.editMessage(chatID, lastMsgID, text)
-	editMsg.ReplyMarkup = createInlineConnectTemplate(listID, sNewID, sGrID)
-	return editMsg, nil
-}
+		h.container.DeleteRecoverList(listID)
 
-func (h *Hub) connectTemplate(chatID int64, groupID, listID, newID, lastMsgID int) (*tg.EditMessageTextConfig, error) {
-	templateList, err := h.db.Product().GetAll(context.TODO(), listID)
-	if err != nil {
-		return nil, err
-	}
-	var newList *store.Product
-	newList, err = h.db.Product().GetAll(context.TODO(), newID)
-	// if no exist products in products table its means the list is clear
-	if err != nil {
-		if err == store.NoRowProductError {
-			err := h.db.Product().Create(context.TODO(), newID)
-			if err != nil {
-				return nil, err
-			}
-			newList = &store.Product{
-				ListID:   newID,
-				Products: []string{},
-			}
-		} else {
+		listName, err = h.db.ProductList().MakeListActive(context.TODO(), listID)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		prodList, productsList := parseTextListToObj(text, chatID, groupID)
+		id, err := h.db.ProductList().Create(context.TODO(), prodList)
+		if err != nil {
+			return nil, err
+		}
+		products := &store.Product{
+			ListID:   id,
+			Products: productsList,
+		}
+		if err = h.db.Product().Create(context.TODO(), products); err != nil {
 			return nil, err
 		}
 	}
-	// add products from template at list
-	newList.Products = append(newList.Products, templateList.Products...)
-	err = h.db.Product().Add(context.TODO(), *newList)
-	if err != nil {
-		return nil, err
-	}
-	editMsg := h.editMessage(chatID, lastMsgID, "✅ products from the template have been <b>successfully added</b> to the new list")
-	editMsg.ReplyMarkup = createInlineGetCurGroup(groupID)
-	return editMsg, nil
+	msg = h.createMessage(chatID, "The list - "+listName+" is recover")
+	msg.ReplyMarkup = createInlineGetCurGroupList(listID, listName)
+	return msg, nil
 }
 
 func (h *Hub) getUserFromGroup(chatID int64, lastMsgID, groupID int) (*tg.EditMessageTextConfig, error) {
@@ -164,7 +136,7 @@ func (h *Hub) getUserForDeleteFrGr(ChatID int64, lastMsgID, groupID int) (*tg.Ed
 		editMsg.ReplyMarkup = creaetInlineBackToGroupButton(groupID)
 		return editMsg, nil
 	}
-	editMsg := h.editMessage(ChatID, lastMsgID, "Choise user from:"+groupInfo.GroupName)
+	editMsg := h.editMessage(ChatID, lastMsgID, "Choise user from: "+groupInfo.GroupName)
 	editMsg.ReplyMarkup = createInlineDeleteUser(*groupInfo.UsersInfo, groupID, groupInfo.OwnerID)
 	return editMsg, nil
 }

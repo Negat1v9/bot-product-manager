@@ -71,7 +71,7 @@ func (r *ManagerGroupRepo) AllByGroupID(ctx context.Context, groupID int) (*stor
 			FROM group_info
 			LEFT JOIN product_list 
 			ON group_info.id = product_list.group_id
-		WHERE group_info.id = ? AND product_list.is_template IS NULL;`,
+		WHERE group_info.id = ? AND product_list.is_active=1;`,
 		groupID,
 	)
 	if err != nil {

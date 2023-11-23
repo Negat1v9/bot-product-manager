@@ -2,6 +2,7 @@ package telegram
 
 import (
 	// "strconv"
+	// "fmt"
 	"strconv"
 	"strings"
 
@@ -19,7 +20,7 @@ func parseCallBackOneParam(prefix, callBack string) string {
 	return callBack[len(prefix):]
 }
 
-// create callback view like prefisDATA1-DATA2...
+// create callback view like prefisDATA1@DATA2...
 func createCallBackFewParam(prefix string, data ...string) *string {
 	res := []byte{}
 	res = append(res, []byte(prefix+data[0])...)
@@ -78,7 +79,6 @@ func parseStringToProducts(s string, listID int) store.Product {
 	return res
 }
 
-// NOTE: Test this
 func parseIndexEditProduct(s string) map[int]bool {
 	res := make(map[int]bool)
 	temp := ""
@@ -118,6 +118,19 @@ func deleteProductByIndex(products []string, targets map[int]bool) []string {
 	return res
 }
 
+func makeNameClear(name string) string {
+	name = helper.CutLineBreak(name)
+	res := make([]rune, 0, len(name))
+	for _, v := range name {
+		if v == ' ' {
+			res = append(res, '_')
+		} else {
+			res = append(res, v)
+		}
+	}
+	return string(res)
+}
+
 func clearCallBackData(s string) string {
 	for i, v := range s {
 		if v == '@' {
@@ -138,25 +151,18 @@ func parseNameGroupAddUser(s string) string {
 }
 
 func parseNameListActions(s string) string {
-	l := len(s) - 1
-	for i := range s {
-		if s[l-i] == ' ' {
-			return s[l-i+1:]
+	for i := len(s) - 1; i >= 0; i-- {
+		if s[i] == ' ' {
+			return s[i+1:]
 		}
 	}
-	// res, _ := strings.CutSuffix(s, )
-	// res, _ := strings.CutPrefix(s, addNewProductMessageReply)
+
 	return " "
 }
 func parseGroupListName(s string) string {
 	res, _ := strings.CutPrefix(s, answerCreateGroupListMsg)
 	return res
 }
-
-// func parseListNameEditList(s string) string {
-// 	res, _ := strings.CutPrefix(s, answerEditListMessage)
-// 	return res
-// }
 
 // Check slice of users and compare with target ID
 func checkUserInGroup(targetUserID int64, users []store.User) bool {
@@ -175,4 +181,74 @@ func searchOwnerGroup(ownerID int64, users []store.User) *store.User {
 		}
 	}
 	return nil
+}
+
+// Info: add many of new product in Editors for current list, if its first edits, create one
+func addManyEditsProductList(u store.User, editors []store.Editors, manyNewProducts int) []store.Editors {
+	isExistUser := false
+	indexUser := 0
+	for i, e := range editors {
+		if e.User.ChatID == u.ChatID {
+			indexUser = i
+			isExistUser = true
+			break
+		}
+	}
+	if isExistUser {
+		editors[indexUser].ManyAddProducts += manyNewProducts
+	} else {
+		editor := store.Editors{User: u, ManyAddProducts: manyNewProducts}
+		editors = append(editors, editor)
+	}
+	return editors
+}
+
+func parseTextListToObj(text string, owner int64, groupID int) (*store.ProductList, []string) {
+	splited := splitText(text, '\n')
+	// fmt.Println(splited)
+	// fmt.Println(text)
+	listName := parseNameTextList(splited[0])
+	prodSlice := parseProductsTextList(splited[1:])
+	prodList := &store.ProductList{
+		OwnerID: &owner,
+		GroupID: &groupID,
+		Name:    &listName,
+	}
+	return prodList, prodSlice
+}
+
+func parseNameTextList(firstRow string) string {
+	for i := len(firstRow) - 1; i >= 0; i-- {
+		if firstRow[i] == ' ' {
+			return firstRow[i+1:]
+		}
+	}
+	return " "
+}
+func parseProductsTextList(text []string) []string {
+	r := []string{}
+	for _, v := range text {
+		if v[0] == '-' {
+			t, _ := strings.CutPrefix(v, "-  ")
+			r = append(r, t)
+		}
+	}
+	return r
+
+}
+
+func splitText(text string, key rune) []string {
+	r := []string{}
+	t := ""
+	for _, v := range text {
+		if v == key {
+			if t != "" {
+				r = append(r, t)
+				t = ""
+			}
+		} else {
+			t += string(v)
+		}
+	}
+	return r
 }

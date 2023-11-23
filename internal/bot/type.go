@@ -26,14 +26,15 @@ const (
 	isGetLists
 	// get all groups names
 	isGetGroupLists
-	// get in group all templates what was saved
-	isGetGroupTemplates
-	// get one group template for edit
-	isGetOneGroupTemplate
+
 	// user want complite group list and he receive choice save template
 	isWantCompliteList
 	// complite list
 	isCompliteList
+	// is user want restore list
+	isRestoreProductList
+	// group want restore group list
+	isRestoreGroupList
 	// complite solo list without chance save template
 	isCompliteSoloList
 	// user want choice save list as template
@@ -89,7 +90,8 @@ const (
 
 // INFO: CustomType for message for log time respose create
 type MessageWithTime struct {
-	Msg        *tgbotapi.MessageConfig
-	EditMesage *tgbotapi.EditMessageTextConfig
-	WorkTime   time.Time
+	Msg             *tgbotapi.MessageConfig
+	EditMesage      *tgbotapi.EditMessageTextConfig
+	EditReplyMarkup *tgbotapi.EditMessageReplyMarkupConfig
+	WorkTime        time.Time
 }

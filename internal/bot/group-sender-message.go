@@ -4,10 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"time"
 
 	"github.com/Negat1v9/telegram-bot-orders/store"
 )
+
+const timeOutForComliteList = 10
 
 var (
 	userNoExistError     = errors.New("user not exist")
@@ -75,4 +78,41 @@ func (h *Hub) sendNotifAddNewList(createrID int64, groupID int, listName string)
 		h.response <- MessageWithTime{Msg: msg, WorkTime: start}
 	}
 	return nil
+}
+
+func (h *Hub) sendComplitedListGroupDelay(listID, groupID int, listText string) {
+	if ok := h.setTimerForComliteMsg(listID); ok {
+		return
+	}
+	timeStart := time.Now()
+	groupInfo, err := h.db.ManagerGroup().InfoGroup(context.TODO(), groupID)
+	// FIXME: What if error?
+	if err != nil {
+		return
+	}
+	if err = h.db.ProductList().Delete(context.TODO(), listID); err != nil {
+		return
+	}
+	for _, user := range *groupInfo.UsersInfo {
+		msg := h.createMessage(user.ChatID, listText)
+		h.response <- MessageWithTime{Msg: msg, WorkTime: timeStart}
+	}
+
+}
+
+// Info: get user time for recover list
+// true - the list is was recovered
+// false - user confirm list is ready
+func (h *Hub) setTimerForComliteMsg(listID int) bool {
+
+	h.container.SetRecoverList(listID)
+
+	defer h.container.DeleteRecoverList(listID)
+
+	time.Sleep(time.Second * timeOutForComliteList)
+
+	if h.container.isInContainerList(listID) {
+		return false
+	}
+	return true
 }

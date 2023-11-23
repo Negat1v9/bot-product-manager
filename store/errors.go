@@ -8,4 +8,5 @@ var (
 	NoUserGroupError        = errors.New("You are have`t any group, create or join in youre first group!")
 	NoExistUserError        = errors.New("user is not exist")
 	UserNotInGroup          = errors.New("user is not in group")
+	NoRowExistError         = errors.New("No row found to edit or delete")
 )

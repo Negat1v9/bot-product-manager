@@ -3,6 +3,7 @@ package telegram
 import (
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/Negat1v9/telegram-bot-orders/store"
 )
@@ -16,6 +17,25 @@ func createMessageProductList(p []string) string {
 		row += "<b>" + product + "</b>" + "\n"
 		s = append(s, row...)
 	}
+	return string(s)
+}
+
+func createMessageCompliteList(p store.Product, complByUser int64) string {
+	s := []byte{}
+	s = append(s, []byte("🪩 List - <b><u>"+p.ListName+"</u></b>\n")...)
+	var temp string
+	for _, product := range p.Products {
+		temp = "-  "
+		temp += "<b>" + product + "</b>" + "\n"
+		s = append(s, temp...)
+	}
+	s = append(s, []byte("\n💡 <b>Informations</b> 💡\n")...)
+	for _, editor := range p.Editors {
+		temp = "🔸 <b>" + *editor.User.UserName + "</b>" + " - " + strconv.Itoa(editor.ManyAddProducts) + " added products\n"
+		s = append(s, temp...)
+	}
+	temp = time.Now().Format(time.DateTime)
+	s = append(s, []byte("\n✅ <u>Completed in</u> 📅\n<b>"+temp+"</b>")...)
 	return string(s)
 }
 
