@@ -8,7 +8,7 @@ type Store interface {
 	ManagerGroup() ManagerGroupRepo
 	Group() GroupRepo
 	ProductList() ProductListRepo
-	Product() ProductRepo
+	// Product() ProductRepo
 }
 
 type UserRepo interface {
@@ -35,26 +35,28 @@ type GroupRepo interface {
 
 // NOTE: Merge ProductList and Product Repositories
 type ProductListRepo interface {
-	MergeListGroup(ctx context.Context, listID, groupID int) error
 	Create(ctx context.Context, p *ProductList) (int, error)
 	GetListID(ctx context.Context, listName string) (int, error)
-	GetAll(ctx context.Context, UserID int64) ([]ProductList, error)
+	GetAllNames(ctx context.Context, UserID int64) ([]ProductList, error)
 	GetGroupListByID(ctx context.Context, listID int) (ProductList, error)
+	GetAllInfoProductLissIdOrName(ctx context.Context, listID int, name string) (*ProductList, error)
+	EditProductList(ctx context.Context, l ProductList) error
+	MergeListGroup(ctx context.Context, listID, groupID int) error
 	MakeListInactive(ctx context.Context, listID int) error
 	MakeListActive(ctx context.Context, listID int) (string, error)
 	Delete(ctx context.Context, listID int) error
 }
 
-type ProductRepo interface {
-	Create(ctx context.Context, p *Product) error
-	GetAllProducts(ctx context.Context, listID int) (*Product, error)
-	Add(ctx context.Context, p Product) error
-	// Delete(ctx context.Context, ID int) error
-	ConvertStringProduct(s string) ([]string, error)
-	ConvertProductString(p []string) (string, error)
-	ConvertEditorsString(e []Editors) (string, error)
-	ConvertStringEditors(s string) ([]Editors, error)
-}
+// type ProductRepo interface {
+// 	Create(ctx context.Context, p *Product) error
+// 	GetAllProducts(ctx context.Context, listID int) (*Product, error)
+// 	Add(ctx context.Context, p Product) error
+// 	// Delete(ctx context.Context, ID int) error
+// 	ConvertStringProduct(s string) ([]string, error)
+// 	ConvertProductString(p []string) (string, error)
+// 	ConvertEditorsString(e []Editors) (string, error)
+// 	ConvertStringEditors(s string) ([]Editors, error)
+// }
 
 type User struct {
 	ChatID   int64
@@ -76,20 +78,14 @@ type Group struct {
 // One list products all value is a poinet ->
 // group can have 0 products list
 type ProductList struct {
-	ID      *int
-	OwnerID *int64
-	GroupID *int
-	Name    *string
-}
-
-// product copy
-type Product struct {
-	ID       int
-	ListID   int
-	ListName string
+	ID       *int
+	OwnerID  *int64
+	GroupID  *int
+	Name     *string
 	Products []string
 	Editors  []Editors
 }
+
 
 type Editors struct {
 	User            User

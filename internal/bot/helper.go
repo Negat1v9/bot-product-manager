@@ -59,7 +59,7 @@ func convSToI[T int | int64](p string, base int) T {
 }
 
 // Parse Latter is: "," || "."
-func parseStringToProducts(s string, listID int) store.Product {
+func parseStringToProducts(s string) []string {
 	products := []string{}
 	prev := 0
 	for i := range s {
@@ -72,11 +72,8 @@ func parseStringToProducts(s string, listID int) store.Product {
 	if prev != len(s) {
 		products = append(products, helper.CutLineBreak(s[prev:]))
 	}
-	res := store.Product{
-		Products: products,
-		ListID:   listID,
-	}
-	return res
+
+	return products
 }
 
 func parseIndexEditProduct(s string) map[int]bool {
@@ -203,18 +200,19 @@ func addManyEditsProductList(u store.User, editors []store.Editors, manyNewProdu
 	return editors
 }
 
-func parseTextListToObj(text string, owner int64, groupID int) (*store.ProductList, []string) {
+func parseTextListToObj(text string, owner int64, groupID int) *store.ProductList {
 	splited := splitText(text, '\n')
 	// fmt.Println(splited)
 	// fmt.Println(text)
 	listName := parseNameTextList(splited[0])
 	prodSlice := parseProductsTextList(splited[1:])
 	prodList := &store.ProductList{
-		OwnerID: &owner,
-		GroupID: &groupID,
-		Name:    &listName,
+		OwnerID:  &owner,
+		GroupID:  &groupID,
+		Name:     &listName,
+		Products: prodSlice,
 	}
-	return prodList, prodSlice
+	return prodList
 }
 
 func parseNameTextList(firstRow string) string {

@@ -14,9 +14,12 @@ func (h *Hub) createMsgToCreateList(ChatID int64, lastMsgID int) *tg.EditMessage
 }
 
 // Info: Create list in database, and answer with new list name
-func (h *Hub) createList(ChatID int64, list *store.ProductList) (*tg.MessageConfig, error) {
-	clearName := makeNameClear(*list.Name)
-	list.Name = &clearName
+func (h *Hub) createList(ChatID int64, nameList string) (*tg.MessageConfig, error) {
+	clearName := makeNameClear(nameList)
+	list := &store.ProductList{
+		OwnerID: &ChatID,
+		Name:    &clearName,
+	}
 	_, err := h.db.ProductList().Create(context.TODO(), list)
 	if err != nil {
 		return nil, err
@@ -28,7 +31,7 @@ func (h *Hub) createList(ChatID int64, list *store.ProductList) (*tg.MessageConf
 
 // Info: Select all users lists and create inline keyboard with its
 func (h *Hub) getListName(chatID int64, lastMsgID int) (editMsg *tg.EditMessageTextConfig, err error) {
-	lists, err := h.db.ProductList().GetAll(context.TODO(), chatID)
+	lists, err := h.db.ProductList().GetAllNames(context.TODO(), chatID)
 	if err != nil {
 		if err == store.NoRowListOfProductError {
 			editMsg = h.editMessage(chatID, lastMsgID, "Nothing is found. Create Youre First list!")
@@ -45,7 +48,7 @@ func (h *Hub) getListName(chatID int64, lastMsgID int) (editMsg *tg.EditMessageT
 }
 
 func (h *Hub) getProductList(ChatID int64, lastMsgID, listID int, listName string) (editMsg *tg.EditMessageTextConfig, err error) {
-	product, err := h.db.Product().GetAllProducts(context.TODO(), listID)
+	productList, err := h.db.ProductList().GetAllInfoProductLissIdOrName(context.TODO(), listID, "")
 	if err != nil {
 		if err == store.NoRowProductError {
 			editMsg = h.editMessage(ChatID, lastMsgID, emptyListMessage)
@@ -54,10 +57,10 @@ func (h *Hub) getProductList(ChatID int64, lastMsgID, listID int, listName strin
 			return nil, err
 		}
 
-	} else if len(product.Products) == 0 {
+	} else if len(productList.Products) == 0 {
 		editMsg = h.editMessage(ChatID, lastMsgID, emptyListMessage)
 	} else {
-		text := createMessageProductList(product.Products)
+		text := createMessageProductList(productList.Products)
 		editMsg = h.editMessage(ChatID, lastMsgID, text)
 	}
 
@@ -84,45 +87,26 @@ func (h *Hub) wantAddNewProduct(chatID int64, products, listName string, lastMsg
 }
 
 // TODO: Make something with length func
-func (h *Hub) addNewProduct(u store.User, Products, listName string, isGroup bool) (*tg.MessageConfig, error) {
-	listID, err := h.db.ProductList().GetListID(context.TODO(), listName)
+func (h *Hub) addNewProduct(u store.User, products, listName string, isGroup bool) (*tg.MessageConfig, error) {
+	list, err := h.db.ProductList().GetAllInfoProductLissIdOrName(context.TODO(), 0, listName)
 	if err != nil {
 		return nil, err
 	}
-	newProduct := parseStringToProducts(Products, listID)
+	newProduct := parseStringToProducts(products)
 
-	lastProduct, err := h.db.Product().GetAllProducts(context.TODO(), listID)
-	if err != nil {
-		// if not row exist
-		if err == store.NoRowProductError {
-			err = h.db.Product().Create(context.TODO(), &store.Product{ListID: listID})
-			lastProduct = &store.Product{
-				ListID:   listID,
-				Products: []string{},
-				Editors:  []store.Editors{},
-			}
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			return nil, err
-		}
-	}
-	text := createMessageSuccessAddedProduct(newProduct.Products)
+	// add to old values new
+	text := createMessageSuccessAddedProduct(newProduct)
 	msg := h.createMessage(u.ChatID, text)
 	if isGroup {
-		newProduct.Editors = addManyEditsProductList(u, lastProduct.Editors, len(newProduct.Products))
-		msg.ReplyMarkup = createInlineGetCurGroupList(listID, listName)
+		list.Editors = addManyEditsProductList(u, list.Editors, len(newProduct))
+		msg.ReplyMarkup = createInlineGetCurGroupList(*list.ID, listName)
 	} else {
-		msg.ReplyMarkup = createInlineGetCurList(listID, listName)
+		msg.ReplyMarkup = createInlineGetCurList(*list.ID, listName)
 	}
-	// add to old values new
-	if len(lastProduct.Products) > 0 {
-		lastProduct.Products = append(lastProduct.Products, newProduct.Products...)
-		newProduct.Products = lastProduct.Products
-	}
+	list.Products = append(list.Products, newProduct...)
+
 	// update all row of products set new products and edit many edits for editors list
-	if err := h.db.Product().Add(context.TODO(), newProduct); err != nil {
+	if err := h.db.ProductList().EditProductList(context.TODO(), *list); err != nil {
 		return nil, err
 	}
 
@@ -152,32 +136,27 @@ func (h *Hub) wantCompliteList(chatID int64, listName, products string, listID, 
 		if err != nil {
 			return nil, err
 		}
-		editMsg := h.editMessage(chatID, lastMsgID, isCompletesProductListMsg)
+		editMsg := h.editMessage(chatID, lastMsgID, isCompletesProductListMsg+listName)
+		editMsg.ReplyMarkup = createInlineGoToGroups()
 		if err != nil {
 			return nil, err
 		}
 		return editMsg, nil
 	}
-	productsInfo, err := h.db.Product().GetAllProducts(context.TODO(), listID)
+	list, err := h.db.ProductList().GetAllInfoProductLissIdOrName(context.TODO(), listID, "")
 	if err != nil {
 		return nil, err
 	}
-	// get groupID from db
-	productList, err := h.db.ProductList().GetGroupListByID(context.TODO(), productsInfo.ListID)
-	if err != nil {
-		return nil, err
-	}
-	// editorString :=
-	text := createMessageCompliteList(*productsInfo, chatID)
+
+	text := createMessageCompliteList(*list, chatID)
 	msg := h.editMessage(chatID, lastMsgID, text)
 
-	msg.ReplyMarkup = createInlineAfterComplite(listID, *productList.GroupID, listName)
+	msg.ReplyMarkup = createInlineAfterComplite(listID, *list.GroupID, listName)
 	return msg, nil
 }
 
 func (h *Hub) compliteProductList(ChatID int64, name, sGrID, text string, listID, lastMsgID int) (*tg.EditMessageReplyMarkupConfig, error) {
 
-	// err := h.db.ProductList().Delete(context.TODO(), listID)
 	err := h.db.ProductList().MakeListInactive(context.TODO(), listID)
 	if err != nil {
 		return nil, err
@@ -207,31 +186,29 @@ func (h *Hub) makeListActive(chatID int64, listID int) (*tg.MessageConfig, error
 }
 
 func (h *Hub) editProductList(chatID int64, listName string, indexProducts map[int]bool, isGroup bool) (*tg.MessageConfig, error) {
-	listID, err := h.db.ProductList().GetListID(context.TODO(), listName)
+	// listID, err := h.db.ProductList().GetListID(context.TODO(), listName)
+	list, err := h.db.ProductList().GetAllInfoProductLissIdOrName(context.TODO(), 0, listName)
 	if err != nil {
 		return nil, err
 	}
-	products, err := h.db.Product().GetAllProducts(context.TODO(), listID)
-	if err != nil {
-		return nil, err
-	}
-	products.Products = deleteProductByIndex(products.Products, indexProducts)
 
-	err = h.db.Product().Add(context.TODO(), *products)
+	list.Products = deleteProductByIndex(list.Products, indexProducts)
+
+	err = h.db.ProductList().EditProductList(context.TODO(), *list)
 	if err != nil {
 		return nil, err
 	}
 	var text string
-	if len(products.Products) == 0 {
+	if len(list.Products) == 0 {
 		text = emptyListMessage
 	} else {
-		text = createMessageProductList(products.Products)
+		text = createMessageProductList(list.Products)
 	}
 	msg := h.createMessage(chatID, text)
 	if isGroup {
-		msg.ReplyMarkup = createInlineGetCurGroupList(listID, listName)
+		msg.ReplyMarkup = createInlineGetCurGroupList(*list.ID, listName)
 	} else {
-		msg.ReplyMarkup = createInlineGetCurList(listID, listName)
+		msg.ReplyMarkup = createInlineGetCurList(*list.ID, listName)
 	}
 	return msg, nil
 }

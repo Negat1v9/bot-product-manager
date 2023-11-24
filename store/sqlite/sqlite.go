@@ -13,7 +13,7 @@ type Store struct {
 	managerGroupRepo *ManagerGroupRepo
 	groupRepo        *GroupRepo
 	productListRepo  *ProductListRepo
-	produtRepo       *ProductRepo
+	// produtRepo       *ProductRepo
 }
 
 func Newstorage(db *sql.DB) store.Store {
@@ -68,8 +68,10 @@ func (s *Store) CreateTables() error {
 	CREATE TABLE IF NOT EXISTS "product_list"(
 		id INTEGER PRIMARY KEY,
 		owner_id INTEGER,
-		group_id INTEGER,
+		group_id INTEGER DEFAULT NULL,
 		name TEXT NOT NULL,
+		products TEXT DEFAULT ' ',
+		editors TEXT DEFAULT ' ',
 		is_active INTEGER DEFAULT 1,
 		CONSTRAINT fk_product_list_1
 			FOREIGN KEY (owner_id)
@@ -79,27 +81,16 @@ func (s *Store) CreateTables() error {
 			FOREIGN KEY (group_id)
 			REFERENCES group_info(id)
 			ON DELETE CASCADE
-
 	);`)
 	if err != nil {
 		return errors.New(pkg + ": " + err.Error())
 	}
 
-	_, err = s.db.Exec(`
-	CREATE TABLE IF NOT EXISTS "product"(
-		id INTEGER PRIMARY KEY,
-		list_id INTEGER,
-		products TEXT DEFAULT ' ',
-		editors TEXT DEFAULT ' ',
-		CONSTRAINT fk_product_1
-			FOREIGN KEY (list_id)
-			REFERENCES product_list(id)
-			ON DELETE CASCADE
-	); 
-	PRAGMA foreign_keys = ON;`)
+	_, err = s.db.Exec("PRAGMA foreign_keys = 1;")
 	if err != nil {
-		return errors.New(pkg + ": " + err.Error())
+		return errors.New(pkg + err.Error())
 	}
+
 	return nil
 }
 
@@ -141,14 +132,4 @@ func (s *Store) ProductList() store.ProductListRepo {
 		storage: s,
 	}
 	return s.productListRepo
-}
-
-func (s *Store) Product() store.ProductRepo {
-	if s.produtRepo != nil {
-		return s.produtRepo
-	}
-	s.produtRepo = &ProductRepo{
-		storage: s,
-	}
-	return s.produtRepo
 }

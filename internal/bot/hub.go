@@ -269,11 +269,8 @@ func (h *Hub) isForwardMessage(msg *tg.Message, timeStart time.Time) error {
 	var err error
 	switch {
 	case isCreateNameForward(text):
-		list := &store.ProductList{
-			OwnerID: &msg.From.ID,
-			Name:    &msg.Text,
-		}
-		res, err = h.createList(msg.Chat.ID, list)
+
+		res, err = h.createList(msg.Chat.ID, msg.Text)
 
 	case isAddNewProductForward(text):
 		listName := parseNameListActions(text)

@@ -20,9 +20,9 @@ func createMessageProductList(p []string) string {
 	return string(s)
 }
 
-func createMessageCompliteList(p store.Product, complByUser int64) string {
+func createMessageCompliteList(p store.ProductList, complByUser int64) string {
 	s := []byte{}
-	s = append(s, []byte("🪩 List - <b><u>"+p.ListName+"</u></b>\n")...)
+	s = append(s, []byte("🪩 List - <b><u>"+*p.Name+"</u></b>\n")...)
 	var temp string
 	for _, product := range p.Products {
 		temp = "-  "

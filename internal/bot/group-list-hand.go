@@ -7,9 +7,6 @@ import (
 	tg "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-// Info: for delay send msg to all users in group with message complited list
-// var delayComlitedList = make(map[int]bool)
-
 // Info: Send edit message with all current group lists
 func (h *Hub) GetGroupLists(UserID int64, lastMsgID, groupID int) (editMsg *tg.EditMessageTextConfig, err error) {
 	groupList, err := h.db.ManagerGroup().AllByGroupID(context.TODO(), groupID)
@@ -28,7 +25,7 @@ func (h *Hub) GetGroupLists(UserID int64, lastMsgID, groupID int) (editMsg *tg.E
 }
 
 func (h *Hub) getGroupList(chatID int64, lastMsgID, listID int, listName string) (em *tg.EditMessageTextConfig, err error) {
-	product, err := h.db.Product().GetAllProducts(context.TODO(), listID)
+	list, err := h.db.ProductList().GetAllInfoProductLissIdOrName(context.TODO(), listID, "")
 	if err != nil {
 		if err == store.NoRowProductError {
 			em = h.editMessage(chatID, lastMsgID, emptyListMessage)
@@ -37,10 +34,10 @@ func (h *Hub) getGroupList(chatID int64, lastMsgID, listID int, listName string)
 			return nil, err
 		}
 
-	} else if len(product.Products) == 0 {
+	} else if len(list.Products) == 0 {
 		em = h.editMessage(chatID, lastMsgID, emptyListMessage)
 	} else {
-		text := createMessageProductList(product.Products)
+		text := createMessageProductList(list.Products)
 		em = h.editMessage(chatID, lastMsgID, text)
 	}
 	em.ReplyMarkup = createInlineProductsGroup(listName, listID)
@@ -76,7 +73,7 @@ func (h *Hub) createGroupList(UserID int64, listName, groupName string) (*tg.Mes
 	go h.sendNotifAddNewList(UserID, group.ID, groupName)
 	msg := h.createMessage(UserID, clearNameList+" created successfully ✅")
 
-	msg.ReplyMarkup = createInlineGetCurGroupList(id, listName)
+	msg.ReplyMarkup = createInlineGetCurGroupList(id, clearNameList)
 	return msg, nil
 }
 
@@ -90,18 +87,12 @@ func (h *Hub) recoverGroupList(chatID int64, listID, groupID, lastMsgID int, tex
 			return nil, err
 		}
 	} else {
-		prodList, productsList := parseTextListToObj(text, chatID, groupID)
-		id, err := h.db.ProductList().Create(context.TODO(), prodList)
+		prodList := parseTextListToObj(text, chatID, groupID)
+		listID, err = h.db.ProductList().Create(context.TODO(), prodList)
 		if err != nil {
 			return nil, err
 		}
-		products := &store.Product{
-			ListID:   id,
-			Products: productsList,
-		}
-		if err = h.db.Product().Create(context.TODO(), products); err != nil {
-			return nil, err
-		}
+
 	}
 	msg = h.createMessage(chatID, "The list - "+listName+" is recover")
 	msg.ReplyMarkup = createInlineGetCurGroupList(listID, listName)
