@@ -53,8 +53,8 @@ func (h *Hub) MessageUpdate(msg *tg.Message, timeStart time.Time) (err error) {
 	}
 	if err != nil {
 		// TODO: Make it edit type message
-		msg := h.createErrorMessaeg(msg.From.ID)
-		h.response <- MessageWithTime{Msg: msg, WorkTime: timeStart}
+		editMsg := h.createErrorMessaeg(msg.From.ID, msg.MessageID)
+		h.response <- MessageWithTime{EditMesage: editMsg, WorkTime: timeStart}
 		return err
 	}
 	return nil
@@ -111,7 +111,7 @@ func (h *Hub) CallBackUpdate(cbq *tg.CallbackQuery, timeStart time.Time) error {
 		products := cbq.Message.Text
 		listName := parseCallBackOneParam(prefixAddProductList, cbq.Data)
 		res.EditMesage = h.wantAddNewProduct(cbq.From.ID, products, listName, cbq.Message.MessageID, false)
-		// TODO:
+
 	case isWantAddProductGroupList:
 		products := cbq.Message.Text
 		listName := parseCallBackOneParam(prefixAddProductGroup, cbq.Data)
@@ -126,7 +126,7 @@ func (h *Hub) CallBackUpdate(cbq *tg.CallbackQuery, timeStart time.Time) error {
 		products := cbq.Message.Text
 		groupName := parseCallBackOneParam(prefixChangeList, cbq.Data)
 		res.EditMesage = h.createMessageForEditList(cbq.From.ID, products, groupName, cbq.Message.MessageID, false)
-		// TODO:
+
 	case isWantEditGroupList:
 		products := cbq.Message.Text
 		groupName := parseCallBackOneParam(prefixChangeGroupList, cbq.Data)
@@ -216,14 +216,14 @@ func (h *Hub) CallBackUpdate(cbq *tg.CallbackQuery, timeStart time.Time) error {
 		res.EditMesage, err = h.deleteUserFromGroup(cbq.From.ID, userID, groupID, cbq.Message.MessageID)
 
 	default:
-		msg := h.createErrorMessaeg(cbq.From.ID)
-		h.response <- MessageWithTime{Msg: msg, WorkTime: timeStart}
+		res.EditMesage = h.createErrorMessaeg(cbq.From.ID, cbq.Message.MessageID)
+		h.response <- res
 		return nil
 	}
 
 	if err != nil {
-		msg := h.createErrorMessaeg(cbq.From.ID)
-		h.response <- MessageWithTime{Msg: msg, WorkTime: timeStart}
+		res.EditMesage = h.createErrorMessaeg(cbq.From.ID, cbq.Message.MessageID)
+		h.response <- res
 		return err
 	}
 	h.response <- res
@@ -336,9 +336,9 @@ func (h *Hub) createMessage(ChatId int64, text string) *tg.MessageConfig {
 	return &msgCongig
 }
 
-func (h *Hub) createErrorMessaeg(chatID int64) *tg.MessageConfig {
-	msg := tg.NewMessage(chatID, errorMessage)
-	return &msg
+func (h *Hub) createErrorMessaeg(chatID int64, lastMsgID int) *tg.EditMessageTextConfig {
+	editMsg := h.editMessage(chatID, lastMsgID, errorMessage)
+	return editMsg
 }
 
 // NOTE: Make my example
