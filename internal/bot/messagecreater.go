@@ -20,7 +20,7 @@ func createMessageProductList(p []string) string {
 	return string(s)
 }
 
-func createMessageCompliteList(p store.ProductList, complByUser int64) string {
+func createMessageCompliteGroupList(p store.ProductList, complByUser int64) string {
 	s := []byte{}
 	s = append(s, []byte("🪩 List - <b><u>"+*p.Name+"</u></b>\n")...)
 	var temp string
@@ -35,8 +35,20 @@ func createMessageCompliteList(p store.ProductList, complByUser int64) string {
 		s = append(s, temp...)
 	}
 	temp = time.Now().Format(time.DateTime)
-	s = append(s, []byte("\n✅ <u>Completed in</u> 📅\n<b>"+temp+"</b>")...)
+	s = append(s, "\n✅ <u>Completed in</u> 📅\n<b>"+temp+"</b>"...)
 	return string(s)
+}
+
+func createMessageComliteUserList(list store.ProductList) string {
+	res := []byte("List - <b><u>" + *list.Name + "</u></b>\n")
+	t := ""
+	for _, prod := range list.Products {
+		t = "-  " + "<b>" + prod + "</b>\n"
+		res = append(res, t...)
+	}
+	t = time.Now().Format(time.DateTime)
+	res = append(res, "\n✅ <u>Completed in</u> 📅\n<b>"+t+"</b>"...)
+	return string(res)
 }
 
 func createMessageSuccessAddedProduct(p []string) string {

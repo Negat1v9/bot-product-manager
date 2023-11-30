@@ -10,7 +10,7 @@ import (
 	"github.com/Negat1v9/telegram-bot-orders/store"
 )
 
-const timeOutForComliteList = 10
+const timeOutForComliteList = 20
 
 var (
 	userNoExistError     = errors.New("user not exist")

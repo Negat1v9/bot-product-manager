@@ -86,7 +86,6 @@ func (h *Hub) wantAddNewProduct(chatID int64, products, listName string, lastMsg
 	return editMsg
 }
 
-// TODO: Make something with length func
 func (h *Hub) addNewProduct(u store.User, products, listName string, isGroup bool) (*tg.MessageConfig, error) {
 	list, err := h.db.ProductList().GetAllInfoProductLissIdOrName(context.TODO(), 0, listName)
 	if err != nil {
@@ -148,39 +147,57 @@ func (h *Hub) wantCompliteList(chatID int64, listName, products string, listID, 
 		return nil, err
 	}
 
-	text := createMessageCompliteList(*list, chatID)
+	text := createMessageCompliteGroupList(*list, chatID)
 	msg := h.editMessage(chatID, lastMsgID, text)
 
 	msg.ReplyMarkup = createInlineAfterComplite(listID, *list.GroupID, listName)
 	return msg, nil
 }
 
-func (h *Hub) compliteProductList(ChatID int64, name, sGrID, text string, listID, lastMsgID int) (*tg.EditMessageReplyMarkupConfig, error) {
+func (h *Hub) compliteProductList(ChatID int64, name string, listID, lastMsgID int) (*tg.EditMessageTextConfig, error) {
 
-	err := h.db.ProductList().MakeListInactive(context.TODO(), listID)
+	list, err := h.db.ProductList().GetAllInfoProductLissIdOrName(context.TODO(), listID, "")
 	if err != nil {
 		return nil, err
 	}
-	var markup *tg.InlineKeyboardMarkup
 
-	if sGrID == "" {
-		markup = createInlineRecoverList(listID)
-	} else {
-		groupID := convSToI[int](sGrID, 0)
-		go h.sendComplitedListGroupDelay(listID, groupID, text)
-		markup = createInlineRecoverGroupList(listID, sGrID, name)
+	err = h.db.ProductList().MakeListInactive(context.TODO(), listID)
+	if err != nil {
+		return nil, err
 	}
-
-	msg := h.editReplyMarkup(ChatID, markup, lastMsgID)
-	return msg, nil
+	text := createMessageComliteUserList(*list)
+	editMsg := h.editMessage(ChatID, lastMsgID, text)
+	editMsg.ReplyMarkup = createInlineRecoverList(listID)
+	go func() {
+		if ok := h.setTimerForComliteMsg(listID); ok {
+			return
+		}
+		err := h.db.ProductList().Delete(context.TODO(), listID)
+		// What if error
+		if err != nil {
+			return
+		}
+	}()
+	return editMsg, nil
 }
 
-func (h *Hub) makeListActive(chatID int64, listID int) (*tg.MessageConfig, error) {
-	listName, err := h.db.ProductList().MakeListActive(context.TODO(), listID)
-	if err != nil {
-		return nil, err
+func (h *Hub) recoverUserList(chatID int64, listID int, text string) (msg *tg.MessageConfig, err error) {
+	var listName string
+	// make List active in db
+	if h.container.isInContainerList(listID) {
+		h.container.DeleteRecoverList(listID)
+		listName, err = h.db.ProductList().MakeListActive(context.TODO(), listID)
+
+	} else {
+		list := parseTextUserList(text, chatID)
+		listName = *list.Name
+		listID, err = h.db.ProductList().Create(context.TODO(), list)
+		if err != nil {
+			return nil, err
+		}
 	}
-	msg := h.createMessage(chatID, "The list - "+listName+" is recover")
+
+	msg = h.createMessage(chatID, "The list - "+listName+" is recover")
 	msg.ReplyMarkup = createInlineGetCurList(listID, listName)
 	return msg, nil
 }

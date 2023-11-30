@@ -77,6 +77,26 @@ func (h *Hub) createGroupList(UserID int64, listName, groupName string) (*tg.Mes
 	return msg, nil
 }
 
+func (h *Hub) compliteGroupList(ChatID int64, name, sGrID, text string, listID, lastMsgID int) (*tg.EditMessageReplyMarkupConfig, error) {
+
+	err := h.db.ProductList().MakeListInactive(context.TODO(), listID)
+	if err != nil {
+		return nil, err
+	}
+	var markup *tg.InlineKeyboardMarkup
+
+	// if sGrID == "" {
+	// 	markup = createInlineRecoverList(listID)
+	// } else {
+	groupID := convSToI[int](sGrID, 0)
+	go h.sendComplitedListGroupDelay(listID, groupID, text)
+	markup = createInlineRecoverGroupList(listID, sGrID, name)
+	// }
+
+	msg := h.editReplyMarkup(ChatID, markup, lastMsgID)
+	return msg, nil
+}
+
 func (h *Hub) recoverGroupList(chatID int64, listID, groupID, lastMsgID int, text, listName string) (msg *tg.MessageConfig, err error) {
 	if h.container.isInContainerList(listID) {
 
@@ -87,7 +107,7 @@ func (h *Hub) recoverGroupList(chatID int64, listID, groupID, lastMsgID int, tex
 			return nil, err
 		}
 	} else {
-		prodList := parseTextListToObj(text, chatID, groupID)
+		prodList := parseTextGroupListToObj(text, chatID, groupID)
 		listID, err = h.db.ProductList().Create(context.TODO(), prodList)
 		if err != nil {
 			return nil, err

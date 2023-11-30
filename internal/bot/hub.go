@@ -140,7 +140,7 @@ func (h *Hub) CallBackUpdate(cbq *tg.CallbackQuery, timeStart time.Time) error {
 	case isCompliteSoloList:
 		data := parseCallBackFewParam(prefixCompliteSoloList, cbq.Data)
 		listID, listName := convSToI[int](data[0], 0), data[1]
-		res.EditReplyMarkup, err = h.compliteProductList(cbq.From.ID, listName, "", "text", listID, cbq.Message.MessageID)
+		res.EditMesage, err = h.compliteProductList(cbq.From.ID, listName, listID, cbq.Message.MessageID)
 
 	case isWantCompliteList:
 		products := cbq.Message.Text
@@ -151,12 +151,12 @@ func (h *Hub) CallBackUpdate(cbq *tg.CallbackQuery, timeStart time.Time) error {
 	case isCompliteList:
 		data := parseCallBackFewParam(prefixCompliteList, cbq.Data)
 		listID, sGroupID, listName := convSToI[int](data[0], 0), data[1], data[2]
-		res.EditReplyMarkup, err = h.compliteProductList(cbq.From.ID, listName, sGroupID, cbq.Message.Text, listID, cbq.Message.MessageID)
+		res.EditReplyMarkup, err = h.compliteGroupList(cbq.From.ID, listName, sGroupID, cbq.Message.Text, listID, cbq.Message.MessageID)
 
 	case isRestoreProductList:
 		data := parseCallBackOneParam(prefixRestoreList, cbq.Data)
 		listID := convSToI[int](data, 0)
-		res.Msg, err = h.makeListActive(cbq.From.ID, listID)
+		res.Msg, err = h.recoverUserList(cbq.From.ID, listID, cbq.Message.Text)
 
 	case isRestoreGroupList:
 		data := parseCallBackFewParam(prefixRestoreGroupList, cbq.Data)

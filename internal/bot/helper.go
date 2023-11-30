@@ -200,15 +200,26 @@ func addManyEditsProductList(u store.User, editors []store.Editors, manyNewProdu
 	return editors
 }
 
-func parseTextListToObj(text string, owner int64, groupID int) *store.ProductList {
+func parseTextGroupListToObj(text string, owner int64, groupID int) *store.ProductList {
 	splited := splitText(text, '\n')
-	// fmt.Println(splited)
-	// fmt.Println(text)
+
 	listName := parseNameTextList(splited[0])
 	prodSlice := parseProductsTextList(splited[1:])
 	prodList := &store.ProductList{
 		OwnerID:  &owner,
 		GroupID:  &groupID,
+		Name:     &listName,
+		Products: prodSlice,
+	}
+	return prodList
+}
+
+func parseTextUserList(text string, ownerID int64) *store.ProductList {
+	splited := splitText(text, '\n')
+	listName := parseNameTextList(splited[0])
+	prodSlice := parseProductsTextList(splited[1:])
+	prodList := &store.ProductList{
+		OwnerID:  &ownerID,
 		Name:     &listName,
 		Products: prodSlice,
 	}
