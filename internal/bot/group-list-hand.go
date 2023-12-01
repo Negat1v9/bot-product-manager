@@ -179,7 +179,7 @@ func (h *Hub) createMessageForInviteUser(chatID int64, groupID, lastMsgID int) (
 	}
 	editMsg := h.editMessage(chatID, lastMsgID, textForInvitingNewUser+group.GroupName)
 	userCmd := TypeUserCommand{
-		TypeCmd: isWantInviteNewUser,
+		TypeCmd: isSendInviteNewUser,
 		GroupID: &groupID,
 	}
 	h.container.AddUserCmd(chatID, userCmd)

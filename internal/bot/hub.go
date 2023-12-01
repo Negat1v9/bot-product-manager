@@ -316,7 +316,6 @@ func (h *Hub) isMessageText(msg *tg.Message, timeStart time.Time, typeCmd TypeUs
 		res, err = h.createGroupList(msg.From.ID, msg.Text, *typeCmd.GroupID)
 
 	case isSendInviteNewUser:
-		// groupName := parseNameGroupAddUser(text)
 		newUserName := parseUserNickNameForAddGroup(msg.Text)
 		res, err = h.inviteNewUser(msg.From.ID, newUserName, *typeCmd.GroupID)
 	}
