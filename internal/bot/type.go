@@ -22,6 +22,8 @@ const (
 	isWantAddProductGroupList
 	// user replyed on message with new products
 	isAddNewProduct // message
+	// user in group want add new products
+	isAddNewProductGroup
 	// get all lists names
 	isGetLists
 	// get all groups names
@@ -45,6 +47,8 @@ const (
 	isWantEditGroupList
 	// user replyed on message with nums products to edit
 	isEditList // message
+	// user in group want edit group list
+	isEditGroupList
 	// send message with groups name to merge list
 	isWantMergeList
 	// user select groups name to merge list

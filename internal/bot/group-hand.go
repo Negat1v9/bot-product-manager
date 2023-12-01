@@ -18,6 +18,9 @@ func (h *Hub) createMessageForNewGroup(ChatID int64, lastMsgID int) (*tg.EditMes
 	} else {
 		editMsg = h.editMessage(ChatID, lastMsgID, NotNickNameUserMsg)
 	}
+	h.container.UsersCmd[ChatID] = TypeUserCommand{
+		TypeCmd: isCreateGroup,
+	}
 	return editMsg, nil
 }
 
@@ -55,12 +58,12 @@ func (h *Hub) GetAllUserGroup(chatID int64, lastMsgID int) (*tg.EditMessageTextC
 	return editMsg, nil
 }
 
-func (h *Hub) inviteNewUser(ChatID int64, newUserName, groupName string) (*tg.MessageConfig, error) {
-	group, err := h.db.ManagerGroup().ByGroupName(context.TODO(), groupName)
+func (h *Hub) inviteNewUser(ChatID int64, newUserName string, groupID int) (*tg.MessageConfig, error) {
+	group, err := h.db.ManagerGroup().ByGroupID(context.TODO(), groupID)
 	if err != nil {
 		return nil, err
 	}
-	err = h.sendInviteMessage(newUserName, group.ID, ChatID)
+	err = h.sendInviteMessage(group.GroupName, group.ID, ChatID)
 	if err != nil {
 		if err == userAlredyGroupError {
 			msg := h.createMessage(ChatID, err.Error())

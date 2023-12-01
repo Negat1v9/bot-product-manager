@@ -45,32 +45,37 @@ func (h *Hub) getGroupList(chatID int64, lastMsgID, listID int, listName string)
 }
 
 // Info: Create message with info for reply message to create new group list
-func (h *Hub) createMessageCreateGroupList(UserID int64, groupID, lastMsgID int) (*tg.EditMessageTextConfig, error) {
+func (h *Hub) createMessageCreateGroupList(chatID int64, groupID, lastMsgID int) (*tg.EditMessageTextConfig, error) {
 	group, err := h.db.ManagerGroup().ByGroupID(context.TODO(), groupID)
 	if err != nil {
 		return nil, err
 	}
-	editMsg := h.editMessage(UserID, lastMsgID, answerCreateGroupListMsg+group.GroupName)
+	editMsg := h.editMessage(chatID, lastMsgID, answerCreateGroupListMsg+group.GroupName)
+	userCmd := TypeUserCommand{
+		TypeCmd: isCreateGroupList,
+		GroupID: &groupID,
+	}
+	h.container.AddUserCmd(chatID, userCmd)
 	return editMsg, nil
 }
 
 // Info: Create group list in database
-func (h *Hub) createGroupList(UserID int64, listName, groupName string) (*tg.MessageConfig, error) {
-	group, err := h.db.ManagerGroup().ByGroupName(context.TODO(), groupName)
+func (h *Hub) createGroupList(UserID int64, listName string, groupID int) (*tg.MessageConfig, error) {
+	group, err := h.db.ManagerGroup().ByGroupID(context.TODO(), groupID)
 	if err != nil {
 		return nil, err
 	}
 	clearNameList := makeNameClear(listName)
 	list := &store.ProductList{
 		OwnerID: &UserID,
-		GroupID: &group.ID,
+		GroupID: &groupID,
 		Name:    &clearNameList,
 	}
 	id, err := h.db.ProductList().Create(context.TODO(), list)
 	if err != nil {
 		return nil, err
 	}
-	go h.sendNotifAddNewList(UserID, group.ID, groupName)
+	go h.sendNotifAddNewList(UserID, groupID, group.GroupName)
 	msg := h.createMessage(UserID, clearNameList+" created successfully ✅")
 
 	msg.ReplyMarkup = createInlineGetCurGroupList(id, clearNameList)
@@ -173,5 +178,10 @@ func (h *Hub) createMessageForInviteUser(chatID int64, groupID, lastMsgID int) (
 		return nil, err
 	}
 	editMsg := h.editMessage(chatID, lastMsgID, textForInvitingNewUser+group.GroupName)
+	userCmd := TypeUserCommand{
+		TypeCmd: isWantInviteNewUser,
+		GroupID: &groupID,
+	}
+	h.container.AddUserCmd(chatID, userCmd)
 	return editMsg, nil
 }

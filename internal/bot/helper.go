@@ -156,10 +156,6 @@ func parseNameListActions(s string) string {
 
 	return " "
 }
-func parseGroupListName(s string) string {
-	res, _ := strings.CutPrefix(s, answerCreateGroupListMsg)
-	return res
-}
 
 // Check slice of users and compare with target ID
 func checkUserInGroup(targetUserID int64, users []store.User) bool {

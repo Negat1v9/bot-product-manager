@@ -36,7 +36,6 @@ func NewHub(db store.Store, cont *Container, resCh chan<- MessageWithTime) manag
 	}
 }
 
-// TODO: For new update create User struct with id and name
 func (h *Hub) MessageUpdate(msg *tg.Message, timeStart time.Time) (err error) {
 	text := toLowerCase(msg.Text)
 
@@ -47,12 +46,18 @@ func (h *Hub) MessageUpdate(msg *tg.Message, timeStart time.Time) (err error) {
 	case CommandUpdate:
 		err = h.isCommand(text, msg, timeStart)
 
-	case ForwardMessageUpdate:
-		err = h.isForwardMessage(msg, timeStart)
+	case TextUpdate:
 
+		t, ok := h.getTypeUserCmd(msg.From.ID)
+		if !ok {
+			msg := h.createMessage(msg.From.ID, errorLastCmdUserDeleted)
+			h.response <- MessageWithTime{Msg: msg, WorkTime: timeStart}
+			return
+		}
+		err = h.isMessageText(msg, timeStart, *t)
 	}
 	if err != nil {
-		// TODO: Make it edit type message
+
 		editMsg := h.createErrorMessaeg(msg.From.ID, msg.MessageID)
 		h.response <- MessageWithTime{EditMesage: editMsg, WorkTime: timeStart}
 		return err
@@ -64,10 +69,17 @@ func (h *Hub) getTypeMessage(text string, msg *tg.Message) int {
 	if isCommandUpdate(text) {
 		return CommandUpdate
 	}
-	if msg.ReplyToMessage != nil {
-		return ForwardMessageUpdate
-	}
+
 	return TextUpdate
+}
+
+func (h *Hub) getTypeUserCmd(userID int64) (*TypeUserCommand, bool) {
+	t, ok := h.container.UsersCmd[userID]
+	if ok {
+		h.container.DeleteUserCmd(userID)
+		return &t, ok
+	}
+	return nil, ok
 }
 
 func (h *Hub) getCallBackType(callBack string) int {
@@ -109,13 +121,16 @@ func (h *Hub) CallBackUpdate(cbq *tg.CallbackQuery, timeStart time.Time) error {
 
 	case isWantAddNewProduct:
 		products := cbq.Message.Text
-		listName := parseCallBackOneParam(prefixAddProductList, cbq.Data)
-		res.EditMesage = h.wantAddNewProduct(cbq.From.ID, products, listName, cbq.Message.MessageID, false)
+		data := parseCallBackFewParam(prefixAddProductList, cbq.Data)
+		listID, listName := convSToI[int](data[0], 0), data[1]
+		res.EditMesage = h.wantAddNewProduct(cbq.From.ID, products, listName, listID, cbq.Message.MessageID, false)
 
 	case isWantAddProductGroupList:
 		products := cbq.Message.Text
-		listName := parseCallBackOneParam(prefixAddProductGroup, cbq.Data)
-		res.EditMesage = h.wantAddNewProduct(cbq.From.ID, products, listName, cbq.Message.MessageID, true)
+		data := parseCallBackFewParam(prefixAddProductGroup, cbq.Data)
+		listID, listName := convSToI[int](data[0], 0), data[1]
+		// listName := parseCallBackOneParam(prefixAddProductGroup, cbq.Data)
+		res.EditMesage = h.wantAddNewProduct(cbq.From.ID, products, listName, listID, cbq.Message.MessageID, true)
 
 	case isGetAllGroupLists:
 		data := parseCallBackOneParam(prefixCallBackListGroup, cbq.Data)
@@ -124,13 +139,15 @@ func (h *Hub) CallBackUpdate(cbq *tg.CallbackQuery, timeStart time.Time) error {
 
 	case isWantEditList:
 		products := cbq.Message.Text
-		groupName := parseCallBackOneParam(prefixChangeList, cbq.Data)
-		res.EditMesage = h.createMessageForEditList(cbq.From.ID, products, groupName, cbq.Message.MessageID, false)
+		data := parseCallBackFewParam(prefixChangeList, cbq.Data)
+		listID, listName := convSToI[int](data[0], 0), data[1]
+		res.EditMesage = h.createMessageForEditList(cbq.From.ID, products, listName, listID, cbq.Message.MessageID, false)
 
 	case isWantEditGroupList:
 		products := cbq.Message.Text
-		groupName := parseCallBackOneParam(prefixChangeGroupList, cbq.Data)
-		res.EditMesage = h.createMessageForEditList(cbq.From.ID, products, groupName, cbq.Message.MessageID, true)
+		data := parseCallBackFewParam(prefixChangeGroupList, cbq.Data)
+		listID, listName := convSToI[int](data[0], 0), data[1]
+		res.EditMesage = h.createMessageForEditList(cbq.From.ID, products, listName, listID, cbq.Message.MessageID, true)
 
 	case isWantCreateGroupList:
 		data := parseCallBackOneParam(prefixCreateGroupList, cbq.Data)
@@ -259,56 +276,95 @@ func (h *Hub) isCommand(text string, msgInfo *tg.Message, timeStart time.Time) e
 	return nil
 }
 
-func (h *Hub) isMessage(text string, msgInfo *tg.Message) (*tg.MessageConfig, error) {
-	return nil, nil
-}
-
-func (h *Hub) isForwardMessage(msg *tg.Message, timeStart time.Time) error {
-	text := msg.ReplyToMessage.Text
+func (h *Hub) isMessageText(msg *tg.Message, timeStart time.Time, typeCmd TypeUserCommand) error {
 	var res *tg.MessageConfig
 	var err error
-	switch {
-	case isCreateNameForward(text):
+	switch typeCmd.TypeCmd {
 
+	case isCreateNewList:
 		res, err = h.createList(msg.Chat.ID, msg.Text)
 
-	case isAddNewProductForward(text):
-		listName := parseNameListActions(text)
+	case isAddNewProduct:
+
 		u := store.User{ChatID: msg.From.ID, UserName: &msg.From.UserName}
-		res, err = h.addNewProduct(u, msg.Text, listName, false)
+		res, err = h.addNewProduct(u, msg.Text, *typeCmd.ListID, false)
 
-	case isAddNewProductGroupForward(text):
-		listName := parseNameListActions(text)
+	case isAddNewProductGroup:
+
 		u := store.User{ChatID: msg.From.ID, UserName: &msg.From.UserName}
-		res, err = h.addNewProduct(u, msg.Text, listName, true)
+		res, err = h.addNewProduct(u, msg.Text, *typeCmd.ListID, true)
 
-	case isEditListForward(text):
-		listName := parseNameListActions(text)
+	case isEditList:
+
 		indexToDelete := parseIndexEditProduct(msg.Text)
-		res, err = h.editProductList(msg.From.ID, listName, indexToDelete, false)
+		res, err = h.editProductList(msg.From.ID, *typeCmd.ListID, indexToDelete, false)
 
-	case isEditGroupListForward(text):
-		listName := parseNameListActions(text)
+	case isEditGroupList:
+
 		indexToDelete := parseIndexEditProduct(msg.Text)
-		res, err = h.editProductList(msg.From.ID, listName, indexToDelete, true)
+		res, err = h.editProductList(msg.From.ID, *typeCmd.ListID, indexToDelete, true)
 
-	case isCreateNewGroupForward(text):
+	case isCreateGroup:
 		managerGroup := &store.GroupInfo{
 			OwnerID:   msg.From.ID,
 			GroupName: msg.Text,
 		}
 		res, err = h.createNewGroup(msg.Chat.ID, managerGroup)
 
-	case isCreateGroupListForward(text):
-		newListName := parseGroupListName(msg.Text)
-		groupName := parseGroupListName(text)
-		res, err = h.createGroupList(msg.From.ID, newListName, groupName)
+	case isCreateGroupList:
 
-	case isSendInviteToNewUser(text):
-		groupName := parseNameGroupAddUser(text)
+		res, err = h.createGroupList(msg.From.ID, msg.Text, *typeCmd.GroupID)
+
+	case isSendInviteNewUser:
+		// groupName := parseNameGroupAddUser(text)
 		newUserName := parseUserNickNameForAddGroup(msg.Text)
-		res, err = h.inviteNewUser(msg.From.ID, newUserName, groupName)
+		res, err = h.inviteNewUser(msg.From.ID, newUserName, *typeCmd.GroupID)
 	}
+	// if typeCmd.TypeCmd == isCreateNewList {
+	// 	res, err = h.createList(msg.Chat.ID, msg.Text)
+	// }
+	// switch {
+	// // case isCreateNameForward(text):
+
+	// // 	res, err = h.createList(msg.Chat.ID, msg.Text)
+
+	// case isAddNewProductForward(text):
+	// 	// listName := parseNameListActions(text)
+	// 	// u := store.User{ChatID: msg.From.ID, UserName: &msg.From.UserName}
+	// 	// res, err = h.addNewProduct(u, msg.Text, listName, false)
+
+	// case isAddNewProductGroupForward(text):
+	// 	// listName := parseNameListActions(text)
+	// 	// u := store.User{ChatID: msg.From.ID, UserName: &msg.From.UserName}
+	// 	// res, err = h.addNewProduct(u, msg.Text, listName, true)
+
+	// case isEditListForward(text):
+	// 	// listName := parseNameListActions(text)
+	// 	// indexToDelete := parseIndexEditProduct(msg.Text)
+	// 	// res, err = h.editProductList(msg.From.ID, listName, indexToDelete, false)
+
+	// case isEditGroupListForward(text):
+	// 	// listName := parseNameListActions(text)
+	// 	// indexToDelete := parseIndexEditProduct(msg.Text)
+	// 	// res, err = h.editProductList(msg.From.ID, listName, indexToDelete, true)
+
+	// case isCreateNewGroupForward(text):
+	// 	// managerGroup := &store.GroupInfo{
+	// 	// 	OwnerID:   msg.From.ID,
+	// 	// 	GroupName: msg.Text,
+	// 	// }
+	// 	// res, err = h.createNewGroup(msg.Chat.ID, managerGroup)
+
+	// case isCreateGroupListForward(text):
+	// 	// newListName := parseGroupListName(msg.Text)
+	// 	// groupName := parseGroupListName(text)
+	// 	// res, err = h.createGroupList(msg.From.ID, newListName, groupName)
+
+	// case isSendInviteToNewUser(text):
+	// 	// groupName := parseNameGroupAddUser(text)
+	// 	// newUserName := parseUserNickNameForAddGroup(msg.Text)
+	// 	// res, err = h.inviteNewUser(msg.From.ID, newUserName, groupName)
+	// }
 	if res != nil {
 		h.response <- MessageWithTime{Msg: res, WorkTime: timeStart}
 		return nil

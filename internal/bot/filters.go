@@ -1,7 +1,5 @@
 package telegram
 
-import "strings"
-
 func isCommandUpdate(u string) bool {
 	if string(u[0]) == "/" {
 		return true
@@ -11,36 +9,36 @@ func isCommandUpdate(u string) bool {
 
 // Product List filters
 
-func isCreateNameForward(s string) bool {
-	return strings.EqualFold(s, answerCreateListMsg)
-}
+// func isCreateNameForward(s string) bool {
+// 	return strings.EqualFold(s, answerCreateListMsg)
+// }
 
-// // PRODUCTS FILTERS
+// // // PRODUCTS FILTERS
 
-func isAddNewProductForward(s string) bool {
-	return strings.Contains(s, addNewProductMessageReply)
-}
+// func isAddNewProductForward(s string) bool {
+// 	return strings.Contains(s, addNewProductMessageReply)
+// }
 
-func isAddNewProductGroupForward(s string) bool {
-	return strings.Contains(s, addNewProductAtGroupList)
+// func isAddNewProductGroupForward(s string) bool {
+// 	return strings.Contains(s, addNewProductAtGroupList)
 
-}
+// }
 
-func isEditListForward(s string) bool {
-	return strings.Contains(s, answerEditListMessage)
-}
-func isEditGroupListForward(s string) bool {
-	return strings.Contains(s, answerEditGroupList)
-}
+// func isEditListForward(s string) bool {
+// 	return strings.Contains(s, answerEditListMessage)
+// }
+// func isEditGroupListForward(s string) bool {
+// 	return strings.Contains(s, answerEditGroupList)
+// }
 
-func isCreateGroupListForward(s string) bool {
-	return strings.HasPrefix(s, answerCreateGroupListMsg)
-}
+// func isCreateGroupListForward(s string) bool {
+// 	return strings.HasPrefix(s, answerCreateGroupListMsg)
+// }
 
-func isSendInviteToNewUser(s string) bool {
-	return strings.HasPrefix(s, textForInvitingNewUser)
-}
+// func isSendInviteToNewUser(s string) bool {
+// 	return strings.HasPrefix(s, textForInvitingNewUser)
+// }
 
-func isCreateNewGroupForward(s string) bool {
-	return strings.EqualFold(s, createGroupMessage)
-}
+// func isCreateNewGroupForward(s string) bool {
+// 	return strings.EqualFold(s, createGroupMessage)
+// }
