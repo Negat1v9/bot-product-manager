@@ -142,20 +142,20 @@ func parseUserNickNameForAddGroup(s string) string {
 	return s[1:]
 }
 
-func parseNameGroupAddUser(s string) string {
-	res, _ := strings.CutPrefix(s, textForInvitingNewUser)
-	return res
-}
+// func parseNameGroupAddUser(s string) string {
+// 	res, _ := strings.CutPrefix(s, textForInvitingNewUser)
+// 	return res
+// }
 
-func parseNameListActions(s string) string {
-	for i := len(s) - 1; i >= 0; i-- {
-		if s[i] == ' ' {
-			return s[i+1:]
-		}
-	}
+// func parseNameListActions(s string) string {
+// 	for i := len(s) - 1; i >= 0; i-- {
+// 		if s[i] == ' ' {
+// 			return s[i+1:]
+// 		}
+// 	}
 
-	return " "
-}
+// 	return " "
+// }
 
 // Check slice of users and compare with target ID
 func checkUserInGroup(targetUserID int64, users []store.User) bool {

@@ -33,7 +33,7 @@ func createListProductInline(lists []store.ProductList) tg.InlineKeyboardMarkup 
 	for _, list := range lists {
 		stID := strconv.Itoa(*list.ID)
 		callBack := createCallBackFewParam(prefixCallBackListProduct, stID, *list.Name)
-		button = tg.InlineKeyboardButton{Text: *list.Name, CallbackData: callBack}
+		button = tg.InlineKeyboardButton{Text: "📜 " + *list.Name, CallbackData: callBack}
 		buttonRow := []tg.InlineKeyboardButton{button}
 		listOfProductList.InlineKeyboard = append(listOfProductList.InlineKeyboard, buttonRow)
 	}
@@ -202,7 +202,7 @@ func createInlineGroupName(groups []store.GroupInfo) *tg.InlineKeyboardMarkup {
 	for _, group := range groups {
 		sGroupID := strconv.Itoa(group.ID)
 		callBack := createCallBackOneParam(prefixCallBackListGroup, sGroupID)
-		groupButton = tg.InlineKeyboardButton{Text: group.GroupName, CallbackData: callBack}
+		groupButton = tg.InlineKeyboardButton{Text: "👥 " + group.GroupName, CallbackData: callBack}
 		keyboard.InlineKeyboard = append(keyboard.InlineKeyboard,
 			[]tg.InlineKeyboardButton{groupButton},
 		)
@@ -223,7 +223,7 @@ func createInlineMergeListGroup(groups []store.GroupInfo, listID int) *tg.Inline
 	for _, group := range groups {
 		sGroupID := strconv.Itoa(group.ID)
 		callBack := createCallBackFewParam(prefixMergeListWithGroup, sGroupID, sListID)
-		groupButton = tg.InlineKeyboardButton{Text: group.GroupName, CallbackData: callBack}
+		groupButton = tg.InlineKeyboardButton{Text: "👥 " + group.GroupName, CallbackData: callBack}
 		keyboard.InlineKeyboard = append(keyboard.InlineKeyboard,
 			[]tg.InlineKeyboardButton{groupButton},
 		)
@@ -242,7 +242,7 @@ func createInlineGroupList(lists []store.ProductList, groupID int) *tg.InlineKey
 	for _, list := range lists {
 		sListID := strconv.Itoa(*list.ID)
 		callBack := createCallBackFewParam(prefixCallBackGroupProductList, sListID, *list.Name, sGroupID)
-		button = tg.InlineKeyboardButton{Text: *list.Name, CallbackData: callBack}
+		button = tg.InlineKeyboardButton{Text: "📜 " + *list.Name, CallbackData: callBack}
 		keyboard.InlineKeyboard = append(keyboard.InlineKeyboard, []tg.InlineKeyboardButton{button})
 	}
 

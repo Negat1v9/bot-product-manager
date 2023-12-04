@@ -59,25 +59,23 @@ func (h *Hub) GetAllUserGroup(chatID int64, lastMsgID int) (*tg.EditMessageTextC
 }
 
 func (h *Hub) inviteNewUser(ChatID int64, newUserName string, groupID int) (*tg.MessageConfig, error) {
-	group, err := h.db.ManagerGroup().ByGroupID(context.TODO(), groupID)
-	if err != nil {
-		return nil, err
-	}
-	err = h.sendInviteMessage(group.GroupName, group.ID, ChatID)
+
+	err := h.sendInviteMessage(newUserName, groupID, ChatID)
 	if err != nil {
 		if err == userAlredyGroupError {
 			msg := h.createMessage(ChatID, err.Error())
-			msg.ReplyMarkup = createInlineGetCurGroup(group.ID)
+			msg.ReplyMarkup = createInlineGetCurGroup(groupID)
 			return msg, nil
 		}
 		// send invited message for forward
 		if err == userNoExistError {
 			msg := h.createMessage(ChatID, joinNewUserAtBotMessage)
+			msg.ReplyMarkup = createInlineGetCurGroup(groupID)
 			return msg, nil
 		}
 	}
 	msg := h.createMessage(ChatID, inviteSendMessage)
-	msg.ReplyMarkup = createInlineGetCurGroup(group.ID)
+	msg.ReplyMarkup = createInlineGetCurGroup(groupID)
 	return msg, nil
 }
 

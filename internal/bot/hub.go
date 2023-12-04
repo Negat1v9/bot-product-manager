@@ -319,51 +319,7 @@ func (h *Hub) isMessageText(msg *tg.Message, timeStart time.Time, typeCmd TypeUs
 		newUserName := parseUserNickNameForAddGroup(msg.Text)
 		res, err = h.inviteNewUser(msg.From.ID, newUserName, *typeCmd.GroupID)
 	}
-	// if typeCmd.TypeCmd == isCreateNewList {
-	// 	res, err = h.createList(msg.Chat.ID, msg.Text)
-	// }
-	// switch {
-	// // case isCreateNameForward(text):
 
-	// // 	res, err = h.createList(msg.Chat.ID, msg.Text)
-
-	// case isAddNewProductForward(text):
-	// 	// listName := parseNameListActions(text)
-	// 	// u := store.User{ChatID: msg.From.ID, UserName: &msg.From.UserName}
-	// 	// res, err = h.addNewProduct(u, msg.Text, listName, false)
-
-	// case isAddNewProductGroupForward(text):
-	// 	// listName := parseNameListActions(text)
-	// 	// u := store.User{ChatID: msg.From.ID, UserName: &msg.From.UserName}
-	// 	// res, err = h.addNewProduct(u, msg.Text, listName, true)
-
-	// case isEditListForward(text):
-	// 	// listName := parseNameListActions(text)
-	// 	// indexToDelete := parseIndexEditProduct(msg.Text)
-	// 	// res, err = h.editProductList(msg.From.ID, listName, indexToDelete, false)
-
-	// case isEditGroupListForward(text):
-	// 	// listName := parseNameListActions(text)
-	// 	// indexToDelete := parseIndexEditProduct(msg.Text)
-	// 	// res, err = h.editProductList(msg.From.ID, listName, indexToDelete, true)
-
-	// case isCreateNewGroupForward(text):
-	// 	// managerGroup := &store.GroupInfo{
-	// 	// 	OwnerID:   msg.From.ID,
-	// 	// 	GroupName: msg.Text,
-	// 	// }
-	// 	// res, err = h.createNewGroup(msg.Chat.ID, managerGroup)
-
-	// case isCreateGroupListForward(text):
-	// 	// newListName := parseGroupListName(msg.Text)
-	// 	// groupName := parseGroupListName(text)
-	// 	// res, err = h.createGroupList(msg.From.ID, newListName, groupName)
-
-	// case isSendInviteToNewUser(text):
-	// 	// groupName := parseNameGroupAddUser(text)
-	// 	// newUserName := parseUserNickNameForAddGroup(msg.Text)
-	// 	// res, err = h.inviteNewUser(msg.From.ID, newUserName, groupName)
-	// }
 	if res != nil {
 		h.response <- MessageWithTime{Msg: res, WorkTime: timeStart}
 		return nil
