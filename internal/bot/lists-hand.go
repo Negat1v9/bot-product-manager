@@ -133,12 +133,12 @@ func (h *Hub) createMessageForEditList(ChatID int64, products, listName string, 
 	var userCmd TypeUserCommand
 	if isGroup {
 		userCmd = TypeUserCommand{
-			TypeCmd: isEditList,
+			TypeCmd: isEditGroupList,
 			ListID:  &listID,
 		}
 	} else {
 		userCmd = TypeUserCommand{
-			TypeCmd: isEditGroupList,
+			TypeCmd: isEditList,
 			ListID:  &listID,
 		}
 	}

@@ -80,7 +80,7 @@ func (h *Hub) sendNotifAddNewList(createrID int64, groupID int, listName string)
 	return nil
 }
 
-func (h *Hub) sendComplitedListGroupDelay(listID, groupID int, listText string) {
+func (h *Hub) sendComplitedListGroupDelay(userComlite int64, listID, groupID int, listText string) {
 	if ok := h.setTimerForComliteMsg(listID); ok {
 		return
 	}
@@ -94,6 +94,9 @@ func (h *Hub) sendComplitedListGroupDelay(listID, groupID int, listText string) 
 		return
 	}
 	for _, user := range *groupInfo.UsersInfo {
+		if userComlite == user.ChatID {
+			continue
+		}
 		msg := h.createMessage(user.ChatID, listText)
 		h.response <- MessageWithTime{Msg: msg, WorkTime: timeStart}
 	}

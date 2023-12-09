@@ -17,10 +17,13 @@ func (h *Hub) createMessageForNewGroup(ChatID int64, lastMsgID int) (*tg.EditMes
 		editMsg = h.editMessage(ChatID, lastMsgID, createGroupMessage)
 	} else {
 		editMsg = h.editMessage(ChatID, lastMsgID, NotNickNameUserMsg)
+		return editMsg, nil
 	}
-	h.container.UsersCmd[ChatID] = TypeUserCommand{
+	userCmd := TypeUserCommand{
 		TypeCmd: isCreateGroup,
 	}
+	h.container.AddUserCmd(ChatID, userCmd)
+
 	return editMsg, nil
 }
 

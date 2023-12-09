@@ -90,13 +90,9 @@ func (h *Hub) compliteGroupList(ChatID int64, name, sGrID, text string, listID, 
 	}
 	var markup *tg.InlineKeyboardMarkup
 
-	// if sGrID == "" {
-	// 	markup = createInlineRecoverList(listID)
-	// } else {
 	groupID := convSToI[int](sGrID, 0)
-	go h.sendComplitedListGroupDelay(listID, groupID, text)
+	go h.sendComplitedListGroupDelay(ChatID, listID, groupID, text)
 	markup = createInlineRecoverGroupList(listID, sGrID, name)
-	// }
 
 	msg := h.editReplyMarkup(ChatID, markup, lastMsgID)
 	return msg, nil
