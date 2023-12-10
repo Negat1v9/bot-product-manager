@@ -13,7 +13,6 @@ type Store struct {
 	managerGroupRepo *ManagerGroupRepo
 	groupRepo        *GroupRepo
 	productListRepo  *ProductListRepo
-	// produtRepo       *ProductRepo
 }
 
 func Newstorage(db *sql.DB) store.Store {

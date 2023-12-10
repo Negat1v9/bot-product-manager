@@ -24,12 +24,12 @@ func (h *Hub) createList(ChatID int64, nameList string) (*tg.MessageConfig, erro
 		OwnerID: &ChatID,
 		Name:    &clearName,
 	}
-	_, err := h.db.ProductList().Create(context.TODO(), list)
+	id, err := h.db.ProductList().Create(context.TODO(), list)
 	if err != nil {
 		return nil, err
 	}
 	msg := h.createMessage(ChatID, fmt.Sprintf("New list %s is created success", *list.Name))
-	msg.ReplyMarkup = createInlineGoToMenu()
+	msg.ReplyMarkup = createInlineGetCurList(id, nameList)
 	return msg, nil
 }
 
@@ -39,7 +39,7 @@ func (h *Hub) getListName(chatID int64, lastMsgID int) (editMsg *tg.EditMessageT
 	if err != nil {
 		if err == store.NoRowListOfProductError {
 			editMsg = h.editMessage(chatID, lastMsgID, "Nothing is found. Create Youre First list!")
-			editMsg.ReplyMarkup = createInlineGoToMenu()
+			editMsg.ReplyMarkup = createInlineNoSoloList()
 			return editMsg, nil
 		}
 		return nil, err

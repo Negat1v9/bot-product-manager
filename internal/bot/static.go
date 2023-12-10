@@ -94,12 +94,11 @@ var (
 
 // Messages
 var (
-	choiceUserList         = "My lists 📝"
-	choiceGroupList        = "My groups 👥"
-	choiceCreateSoloList   = "New-list 📚"
-	choiceCreateGroup      = "New-group 🥷"
+	choiceUserList  = "📜 My List"
+	choiceGroupList = "👥 My groups"
+
 	choiceGetAllUsersGroup = "Users 🧞‍♂️"
-	cmdMenu                = "🗿 <b>Options</b> 🗿\n\n⚾ Select lists created for you for your self ☞ <b><u>My lists</u></b> 📝\n\n🥎 Select all the groups you are a member ☞ <b><u>My groups</u></b> 👥\n\n🏀 Create new list for youre self ☞ <b><u>New-list</u></b> 📚\n\n🎾 Create new group ☞ <b><u>New-group</u></b> 🥷"
+	cmdMenu                = "🗿 <b>Options</b> 🗿\n\n🎱 Push <b><u>My List</u></b> button to get all your lists or create a new one\n\n🏀 Push <b><u>My Group</u></b> to get all your group or create a new one"
 	cmdStart               = "Hi friend, I'm a bot that is designed to create lists 📋 and execute them.\n\nTo find out more click /help. 💭️\n\nClick on /menu to receive all options"
 	cmdHelpMessage         = "Hi, friend 👋. Let me tell you a little about myself:\n\nI'm a bot 👾 that was made to automate\nthe creation of lists 📝 in a telegram, you can:\n\n1. Create personal lists and add things to them.🔥\n\n2. Create group lists that can be edited by all its participants. 🌚\n\n❓ How to use ❓\n\n1️⃣ Select the list to add a new product\n\n2️⃣ Click the add button and\n\n3️⃣ Write message with the product\nnames separated by a ',' or '.'\n\n🟠Example 🧾\n\n✏️ Squash caviar, Juice, Potato, Soup ✏️"
 

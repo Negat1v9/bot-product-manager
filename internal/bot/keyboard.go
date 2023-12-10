@@ -16,28 +16,26 @@ func createInlineGetChoiceList() *tg.InlineKeyboardMarkup {
 			tg.NewInlineKeyboardButtonData(
 				choiceGroupList, prefixGetGroupLists),
 		),
-		tg.NewInlineKeyboardRow(
-			tg.NewInlineKeyboardButtonData(
-				choiceCreateSoloList, prefixCreateSoloList),
-			tg.NewInlineKeyboardButtonData(
-				choiceCreateGroup, prefixCreateGroup),
-		),
 	)
 	return &kb
 }
 
 // Info: creater keyboard on bottom for list products
 func createListProductInline(lists []store.ProductList) tg.InlineKeyboardMarkup {
-	var listOfProductList tg.InlineKeyboardMarkup
+	var kb tg.InlineKeyboardMarkup
 	var button tg.InlineKeyboardButton
 	for _, list := range lists {
 		stID := strconv.Itoa(*list.ID)
 		callBack := createCallBackFewParam(prefixCallBackListProduct, stID, *list.Name)
 		button = tg.InlineKeyboardButton{Text: "📜 " + *list.Name, CallbackData: callBack}
 		buttonRow := []tg.InlineKeyboardButton{button}
-		listOfProductList.InlineKeyboard = append(listOfProductList.InlineKeyboard, buttonRow)
+		kb.InlineKeyboard = append(kb.InlineKeyboard, buttonRow)
 	}
-	return listOfProductList
+	kb.InlineKeyboard = append(kb.InlineKeyboard, tg.NewInlineKeyboardRow(
+		tg.NewInlineKeyboardButtonData(
+			"New-list 📚", prefixCreateSoloList),
+	))
+	return kb
 }
 
 func createProductsInline(listName string, listID int) *tg.InlineKeyboardMarkup {
@@ -165,6 +163,29 @@ func creaetInlineBackToGroupButton(groupID int) *tg.InlineKeyboardMarkup {
 	return &kb
 }
 
+func createInlineNoSoloList() *tg.InlineKeyboardMarkup {
+	kb := tg.NewInlineKeyboardMarkup(
+		tg.NewInlineKeyboardRow(
+			tg.NewInlineKeyboardButtonData(
+				"📚 New-list", prefixCreateSoloList)),
+		tg.NewInlineKeyboardRow(
+			tg.NewInlineKeyboardButtonData(
+				"⚡ Menu", prefixGetMainMenu)),
+	)
+	return &kb
+}
+func createInlineNoGroupUser() *tg.InlineKeyboardMarkup {
+	kb := tg.NewInlineKeyboardMarkup(
+		tg.NewInlineKeyboardRow(
+			tg.NewInlineKeyboardButtonData(
+				"🥷 New-group", prefixCreateGroup)),
+		tg.NewInlineKeyboardRow(
+			tg.NewInlineKeyboardButtonData(
+				"⚡ Menu", prefixGetMainMenu)),
+	)
+	return &kb
+}
+
 func createInlineGoToGroups() *tg.InlineKeyboardMarkup {
 	kb := tg.NewInlineKeyboardMarkup(
 		tg.NewInlineKeyboardRow(
@@ -210,8 +231,11 @@ func createInlineGroupName(groups []store.GroupInfo) *tg.InlineKeyboardMarkup {
 	keyboard.InlineKeyboard = append(keyboard.InlineKeyboard,
 		tg.NewInlineKeyboardRow(
 			tg.NewInlineKeyboardButtonData(
-				"💴 Menu", prefixGetMainMenu),
-		))
+				"💴 Menu", prefixGetMainMenu)),
+		tg.NewInlineKeyboardRow(
+			tg.NewInlineKeyboardButtonData(
+				"🥷 New-group", prefixCreateGroup)),
+	)
 	return &keyboard
 }
 
@@ -255,7 +279,7 @@ func createInlineGroupActions(sGroupID string) [][]tg.InlineKeyboardButton {
 	rows := [][]tg.InlineKeyboardButton{
 		tg.NewInlineKeyboardRow(
 			tg.NewInlineKeyboardButtonData(
-				choiceCreateSoloList, *createCallBackOneParam(prefixCreateGroupList, sGroupID)),
+				"📚 New-list", *createCallBackOneParam(prefixCreateGroupList, sGroupID)),
 			tg.NewInlineKeyboardButtonData(
 				choiceGetAllUsersGroup, *createCallBackOneParam(prefixGetAllUsersGroup, sGroupID)),
 		),

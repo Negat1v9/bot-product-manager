@@ -51,7 +51,7 @@ func (h *Hub) GetAllUserGroup(chatID int64, lastMsgID int) (*tg.EditMessageTextC
 	if err != nil {
 		if err == store.NoUserGroupError {
 			editMsg := h.editMessage(chatID, lastMsgID, err.Error())
-			editMsg.ReplyMarkup = createInlineGoToMenu()
+			editMsg.ReplyMarkup = createInlineNoGroupUser()
 			return editMsg, nil
 		}
 		return nil, err
