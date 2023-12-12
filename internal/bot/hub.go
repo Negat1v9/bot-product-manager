@@ -101,9 +101,9 @@ func (h *Hub) CallBackUpdate(cbq *tg.CallbackQuery, timeStart time.Time) error {
 		res.EditMesage, err = h.getListName(cbq.From.ID, cbq.Message.MessageID)
 
 	case isGetGroupProductList:
-		data := parseCallBackFewParam(prefixCallBackGroupProductList, cbq.Data)
-		listID, listName := convSToI[int](data[0], 0), data[1]
-		res.EditMesage, err = h.getGroupList(cbq.From.ID, cbq.Message.MessageID, listID, listName)
+		data := parseCallBackOneParam(prefixCallBackGroupProductList, cbq.Data)
+		listID := convSToI[int](data, 0)
+		res.EditMesage, err = h.getGroupList(cbq.From.ID, cbq.Message.MessageID, listID)
 
 	case isGetGroupLists:
 		res.EditMesage, err = h.GetAllUserGroup(cbq.From.ID, cbq.Message.MessageID)
@@ -115,39 +115,48 @@ func (h *Hub) CallBackUpdate(cbq *tg.CallbackQuery, timeStart time.Time) error {
 		res.EditMesage, err = h.createMessageForNewGroup(cbq.From.ID, cbq.Message.MessageID)
 
 	case isGetProductList:
-		data := parseCallBackFewParam(prefixCallBackListProduct, cbq.Data)
-		listID, listName := convSToI[int](data[0], 0), data[1]
-		res.EditMesage, err = h.getProductList(cbq.From.ID, cbq.Message.MessageID, listID, listName)
+		data := parseCallBackOneParam(prefixCallBackListProduct, cbq.Data)
+		listID := convSToI[int](data, 0)
+		res.EditMesage, err = h.getProductListV2(cbq.From.ID, cbq.Message.MessageID, listID)
 
 	case isWantAddNewProduct:
 		products := cbq.Message.Text
-		data := parseCallBackFewParam(prefixAddProductList, cbq.Data)
-		listID, listName := convSToI[int](data[0], 0), data[1]
-		res.EditMesage = h.wantAddNewProduct(cbq.From.ID, products, listName, listID, cbq.Message.MessageID, false)
+		data := parseCallBackOneParam(prefixAddProductList, cbq.Data)
+		listID := convSToI[int](data, 0)
+		res.EditMesage = h.wantAddNewProduct(cbq.From.ID, products, listID, cbq.Message.MessageID, false)
 
 	case isWantAddProductGroupList:
 		products := cbq.Message.Text
-		data := parseCallBackFewParam(prefixAddProductGroup, cbq.Data)
-		listID, listName := convSToI[int](data[0], 0), data[1]
-		// listName := parseCallBackOneParam(prefixAddProductGroup, cbq.Data)
-		res.EditMesage = h.wantAddNewProduct(cbq.From.ID, products, listName, listID, cbq.Message.MessageID, true)
+		data := parseCallBackOneParam(prefixAddProductGroup, cbq.Data)
+		listID := convSToI[int](data, 0)
+
+		res.EditMesage = h.wantAddNewProduct(cbq.From.ID, products, listID, cbq.Message.MessageID, true)
 
 	case isGetAllGroupLists:
 		data := parseCallBackOneParam(prefixCallBackListGroup, cbq.Data)
 		groupID := convSToI[int](data, 0)
 		res.EditMesage, err = h.GetGroupLists(cbq.From.ID, cbq.Message.MessageID, groupID)
 
-	case isWantEditList:
-		products := cbq.Message.Text
-		data := parseCallBackFewParam(prefixChangeList, cbq.Data)
-		listID, listName := convSToI[int](data[0], 0), data[1]
-		res.EditMesage = h.createMessageForEditList(cbq.From.ID, products, listName, listID, cbq.Message.MessageID, false)
+	case isWantDeleteProductFromList:
+		data := parseCallBackFewParam(prefixGetPageProdDelete, cbq.Data)
+		listID, offset := convSToI[int](data[0], 0), convSToI[int](data[1], 0)
+		res.EditMesage, err = h.wantDeleteProd(cbq.From.ID, listID, offset, cbq.Message.MessageID, false)
 
-	case isWantEditGroupList:
-		products := cbq.Message.Text
-		data := parseCallBackFewParam(prefixChangeGroupList, cbq.Data)
-		listID, listName := convSToI[int](data[0], 0), data[1]
-		res.EditMesage = h.createMessageForEditList(cbq.From.ID, products, listName, listID, cbq.Message.MessageID, true)
+	case isDeleteProd:
+		data := parseCallBackFewParam(prefixDeleteProd, cbq.Data)
+		prodID, sListID := convSToI[int](data[0], 0), data[1]
+		res.EditMesage, err = h.deleteProd(cbq.From.ID, prodID, cbq.Message.MessageID, sListID, false)
+
+	case isWantDeleteProductFromGroupList:
+
+		data := parseCallBackFewParam(prefixGetPageGroupProdDelete, cbq.Data)
+		listID, offset := convSToI[int](data[0], 0), convSToI[int](data[1], 0)
+		res.EditMesage, err = h.wantDeleteProd(cbq.From.ID, listID, offset, cbq.Message.MessageID, true)
+
+	case isDeleteGroupProd:
+		data := parseCallBackFewParam(prefixDeleteGrProd, cbq.Data)
+		prodID, sListID := convSToI[int](data[0], 0), data[1]
+		res.EditMesage, err = h.deleteProd(cbq.From.ID, prodID, cbq.Message.MessageID, sListID, true)
 
 	case isWantCreateGroupList:
 		data := parseCallBackOneParam(prefixCreateGroupList, cbq.Data)
@@ -155,17 +164,17 @@ func (h *Hub) CallBackUpdate(cbq *tg.CallbackQuery, timeStart time.Time) error {
 		res.EditMesage, err = h.createMessageCreateGroupList(cbq.From.ID, groupID, cbq.Message.MessageID)
 
 	case isCompliteSoloList:
-		data := parseCallBackFewParam(prefixCompliteSoloList, cbq.Data)
-		listID, listName := convSToI[int](data[0], 0), data[1]
-		res.EditMesage, err = h.compliteProductList(cbq.From.ID, listName, listID, cbq.Message.MessageID)
+		data := parseCallBackOneParam(prefixCompliteSoloList, cbq.Data)
+		listID := convSToI[int](data, 0)
+		res.EditMesage, err = h.compliteProductList(cbq.From.ID, listID, cbq.Message.MessageID)
 
-	case isWantCompliteList:
+	case isWantCompliteGrList:
 		products := cbq.Message.Text
-		data := parseCallBackFewParam(prefixWantCompliteList, cbq.Data)
-		listID, listName := convSToI[int](data[0], 0), data[1]
-		res.EditMesage, err = h.wantCompliteList(cbq.From.ID, listName, products, listID, cbq.Message.MessageID)
+		data := parseCallBackOneParam(prefixWantCompliteGrList, cbq.Data)
+		listID := convSToI[int](data, 0)
+		res.EditMesage, err = h.wantCompliteList(cbq.From.ID, products, listID, cbq.Message.MessageID)
 
-	case isCompliteList:
+	case isCompliteGroupList:
 		data := parseCallBackFewParam(prefixCompliteList, cbq.Data)
 		listID, sGroupID, listName := convSToI[int](data[0], 0), data[1], data[2]
 		res.EditReplyMarkup, err = h.compliteGroupList(cbq.From.ID, listName, sGroupID, cbq.Message.Text, listID, cbq.Message.MessageID)
@@ -181,8 +190,9 @@ func (h *Hub) CallBackUpdate(cbq *tg.CallbackQuery, timeStart time.Time) error {
 
 		res.Msg, err = h.recoverGroupList(cbq.From.ID, listID, groupID, cbq.Message.MessageID, cbq.Message.Text, listName)
 	case isWantMergeList:
-		listName := parseCallBackOneParam(prefixToMergeListGroup, cbq.Data)
-		res.EditMesage, err = h.getNameGroupMergeList(cbq.From.ID, listName, cbq.Message.MessageID)
+		data := parseCallBackOneParam(prefixToMergeListGroup, cbq.Data)
+		listID := convSToI[int](data, 0)
+		res.EditMesage, err = h.getNameGroupMergeList(cbq.From.ID, listID, cbq.Message.MessageID)
 
 	case isGetMainMenu:
 		res.EditMesage = h.getMainMenu(cbq.From.ID, cbq.Message.MessageID)
@@ -287,22 +297,12 @@ func (h *Hub) isMessageText(msg *tg.Message, timeStart time.Time, typeCmd TypeUs
 	case isAddNewProduct:
 
 		u := store.User{ChatID: msg.From.ID, UserName: &msg.From.UserName}
-		res, err = h.addNewProduct(u, msg.Text, *typeCmd.ListID, false)
+		res, err = h.addNewProductV2(u, msg.Text, *typeCmd.ListID, false)
 
 	case isAddNewProductGroup:
 
 		u := store.User{ChatID: msg.From.ID, UserName: &msg.From.UserName}
-		res, err = h.addNewProduct(u, msg.Text, *typeCmd.ListID, true)
-
-	case isEditList:
-
-		indexToDelete := parseIndexEditProduct(msg.Text)
-		res, err = h.editProductList(msg.From.ID, *typeCmd.ListID, indexToDelete, false)
-
-	case isEditGroupList:
-
-		indexToDelete := parseIndexEditProduct(msg.Text)
-		res, err = h.editProductList(msg.From.ID, *typeCmd.ListID, indexToDelete, true)
+		res, err = h.addNewProductV2(u, msg.Text, *typeCmd.ListID, true)
 
 	case isCreateGroup:
 		managerGroup := &store.GroupInfo{

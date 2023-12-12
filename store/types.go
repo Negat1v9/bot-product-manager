@@ -8,7 +8,7 @@ type Store interface {
 	ManagerGroup() ManagerGroupRepo
 	Group() GroupRepo
 	ProductList() ProductListRepo
-	// Product() ProductRepo
+	Product() ProductRepo
 }
 
 type UserRepo interface {
@@ -36,27 +36,21 @@ type GroupRepo interface {
 // NOTE: Merge ProductList and Product Repositories
 type ProductListRepo interface {
 	Create(ctx context.Context, p *ProductList) (int, error)
-	GetListID(ctx context.Context, listName string) (int, error)
 	GetAllNames(ctx context.Context, UserID int64) ([]ProductList, error)
-	GetGroupListByID(ctx context.Context, listID int) (ProductList, error)
-	GetAllInfoProductLissIdOrName(ctx context.Context, listID int, name string) (*ProductList, error)
-	EditProductList(ctx context.Context, l ProductList) error
+	GetFoolInfoGroupProdList(ctx context.Context, listID int) (*FoolInfoProductList, error)
+	GetFoolInfoProdList(ctx context.Context, listID int) (*FoolInfoProductList, error)
 	MergeListGroup(ctx context.Context, listID, groupID int) error
 	MakeListInactive(ctx context.Context, listID int) error
 	MakeListActive(ctx context.Context, listID int) (string, error)
 	Delete(ctx context.Context, listID int) error
 }
 
-// type ProductRepo interface {
-// 	Create(ctx context.Context, p *Product) error
-// 	GetAllProducts(ctx context.Context, listID int) (*Product, error)
-// 	Add(ctx context.Context, p Product) error
-// 	// Delete(ctx context.Context, ID int) error
-// 	ConvertStringProduct(s string) ([]string, error)
-// 	ConvertProductString(p []string) (string, error)
-// 	ConvertEditorsString(e []Editors) (string, error)
-// 	ConvertStringEditors(s string) ([]Editors, error)
-// }
+type ProductRepo interface {
+	Add(prod []Product) error
+	CountByListID(c context.Context, listID int) (int, error)
+	GetByListID(context context.Context, listID, offset, limit int) ([]Product, error)
+	Delete(context context.Context, id int) error
+}
 
 type User struct {
 	ChatID   int64
@@ -78,14 +72,28 @@ type Group struct {
 // One list products all value is a poinet ->
 // group can have 0 products list
 type ProductList struct {
-	ID       *int
-	OwnerID  *int64
-	GroupID  *int
-	Name     *string
-	Products []string
-	Editors  []Editors
+	ID      *int
+	OwnerID *int64
+	GroupID *int
+	Name    *string
 }
 
+type Product struct {
+	ID      int
+	Product string
+	UserID  int64
+	ListID  *int
+}
+
+type FoolInfoProductList struct {
+	List     ProductList
+	Products []InfoProduct
+}
+
+type InfoProduct struct {
+	Product string
+	User    *User
+}
 
 type Editors struct {
 	User            User

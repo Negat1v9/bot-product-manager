@@ -26,12 +26,12 @@ var (
 	prefixAddProductGroup          = "addGroup@"
 	prefixGetUserList              = "getlist"
 	prefixGetGroupLists            = "getGroups"
-	prefixWantCompliteList         = "wantComplite@"
+	prefixWantCompliteGrList       = "wantComplite@"
 	prefixCompliteList             = "compl@"
 	prefixCompliteSoloList         = "compliteSolo@"
 	prefixSaveAsTemplete           = "saveTemplete@"
-	prefixChangeList               = "change@"
-	prefixChangeGroupList          = "changeGroup@"
+	prefixDeleteProd               = "deletProd@"
+	prefixDeleteGrProd             = "deleteGrProd@"
 	prefixToMergeListGroup         = "toMerge@"
 	prefixMergeListWithGroup       = "mergeListGrIDListID@"
 	prefixCreateGroup              = "create_group"
@@ -48,6 +48,8 @@ var (
 	prefixLeaveOwnerGroup          = "ownerLeaveGroupID@"
 	prefixRestoreList              = "restoreList@"
 	prefixRestoreGroupList         = "restoreGroupList@"
+	prefixGetPageProdDelete        = "getPageProdDel@"
+	prefixGetPageGroupProdDelete   = "getGrPageProdDel@"
 )
 
 // map with prefix to get type of callBack update
@@ -59,10 +61,10 @@ var prefixsMap = map[string]int{
 	prefixAddProductGroup:          isWantAddProductGroupList,
 	prefixGetUserList:              isGetLists,
 	prefixGetGroupLists:            isGetGroupLists,
-	prefixCompliteList:             isCompliteList,
+	prefixCompliteList:             isCompliteGroupList,
 	prefixCompliteSoloList:         isCompliteSoloList,
-	prefixChangeList:               isWantEditList,
-	prefixChangeGroupList:          isWantEditGroupList,
+	prefixDeleteProd:               isDeleteProd,
+	prefixDeleteGrProd:             isDeleteGroupProd,
 	prefixToMergeListGroup:         isWantMergeList,
 	prefixMergeListWithGroup:       isMergeListGroup,
 	prefixCreateGroup:              isWantCreateGroup,
@@ -77,16 +79,18 @@ var prefixsMap = map[string]int{
 	prefixGetMainMenu:              isGetMainMenu,
 	prefixLeaveGroup:               isLeaveGroup,
 	prefixLeaveOwnerGroup:          isLeaveOwnerGroup,
-	prefixWantCompliteList:         isWantCompliteList,
+	prefixWantCompliteGrList:       isWantCompliteGrList,
 	prefixRestoreList:              isRestoreProductList,
 	prefixRestoreGroupList:         isRestoreGroupList,
+	prefixGetPageProdDelete:        isWantDeleteProductFromList,
+	prefixGetPageGroupProdDelete:   isWantDeleteProductFromGroupList,
 }
 
 // forward messages drafts
 var (
 	createGroupMessage        = "🧐 What band name would you prefer for group?"
 	answerCreateListMsg       = "✏️ Write a <b>name</b> for the new List"
-	addNewProductMessageReply = "Write via 👉 <b>.</b> or 👉 <b>,</b> product names to add it in - "
+	addNewProductMessageReply = "Write via 👉 <b>.</b> or 👉 <b>,</b> product names to add it in List"
 	answerCreateGroupListMsg  = "✒️ Write a name for the list - "
 	answerEditListMessage     = `🎱 Write the <u>numbers</u> of the products you would like to remove from the list - `
 	textForInvitingNewUser    = `Write the user's <b>@nickname</b> to send him an invitation to your group - `
@@ -107,7 +111,7 @@ var (
 	emptyListMessage          = "😿 Now, youre list is empty"
 	emptyUserInGroup          = "Youre group is empty"
 	editedProductList         = "List has been success edited"
-	isCompletesProductListMsg = "Congratulations, you have completed the worksheet - "
+	isCompletesProductListMsg = "Congratulations, you have completed the worksheet ✅"
 
 	ownerGroupWantLeave       = "❗ You are the owner of this group, if you leave it it will be deleted ❌"
 	successLeaveGroup         = "You have successfully left the group 🌈"

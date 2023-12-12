@@ -9,4 +9,5 @@ var (
 	NoExistUserError        = errors.New("user is not exist")
 	UserNotInGroup          = errors.New("user is not in group")
 	NoRowExistError         = errors.New("No row found to edit or delete")
+	NoProuductExistError    = errors.New("No exist product in product list")
 )

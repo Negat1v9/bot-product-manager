@@ -196,52 +196,36 @@ func addManyEditsProductList(u store.User, editors []store.Editors, manyNewProdu
 	return editors
 }
 
-func parseTextGroupListToObj(text string, owner int64, groupID int) *store.ProductList {
-	splited := splitText(text, '\n')
-
-	listName := parseNameTextList(splited[0])
-	prodSlice := parseProductsTextList(splited[1:])
-	prodList := &store.ProductList{
-		OwnerID:  &owner,
-		GroupID:  &groupID,
-		Name:     &listName,
-		Products: prodSlice,
+// Input first row from splited text bu '\n'
+func parseNameTextList(splitedText []string) string {
+	if len(splitedText) == 0 {
+		return " "
 	}
-	return prodList
-}
-
-func parseTextUserList(text string, ownerID int64) *store.ProductList {
-	splited := splitText(text, '\n')
-	listName := parseNameTextList(splited[0])
-	prodSlice := parseProductsTextList(splited[1:])
-	prodList := &store.ProductList{
-		OwnerID:  &ownerID,
-		Name:     &listName,
-		Products: prodSlice,
-	}
-	return prodList
-}
-
-func parseNameTextList(firstRow string) string {
-	for i := len(firstRow) - 1; i >= 0; i-- {
-		if firstRow[i] == ' ' {
-			return firstRow[i+1:]
+	fRow := splitedText[0]
+	for i := len(fRow) - 1; i >= 0; i-- {
+		if fRow[i] == ' ' {
+			return fRow[i+1:]
 		}
 	}
 	return " "
 }
-func parseProductsTextList(text []string) []string {
-	r := []string{}
+
+func parseTextToProd(text []string, ownerID int64, listID int) []store.Product {
+	prod := []store.Product{}
 	for _, v := range text {
 		if v[0] == '-' {
 			t, _ := strings.CutPrefix(v, "-  ")
-			r = append(r, t)
+			p := store.Product{
+				Product: t,
+				UserID:  ownerID,
+				ListID:  &listID,
+			}
+			prod = append(prod, p)
 		}
 	}
-	return r
+	return prod
 
 }
-
 func splitText(text string, key rune) []string {
 	r := []string{}
 	t := ""

@@ -30,9 +30,9 @@ const (
 	isGetGroupLists
 
 	// user want complite group list and he receive choice save template
-	isWantCompliteList
+	isWantCompliteGrList
 	// complite list
-	isCompliteList
+	isCompliteGroupList
 	// is user want restore list
 	isRestoreProductList
 	// group want restore group list
@@ -42,9 +42,13 @@ const (
 	// user want choice save list as template
 	isSaveTemplete
 	// send user message to reply with idited nums pruducts
-	isWantEditList
+	isDeleteProd
 	// is want edit group list
-	isWantEditGroupList
+	isDeleteGroupProd
+	// user want delete prod
+	isWantDeleteProductFromList
+	// user want delete group prod
+	isWantDeleteProductFromGroupList
 	// user replyed on message with nums products to edit
 	isEditList // message
 	// user in group want edit group list

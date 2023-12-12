@@ -24,8 +24,8 @@ func (h *Hub) GetGroupLists(UserID int64, lastMsgID, groupID int) (editMsg *tg.E
 	return editMsg, nil
 }
 
-func (h *Hub) getGroupList(chatID int64, lastMsgID, listID int, listName string) (em *tg.EditMessageTextConfig, err error) {
-	list, err := h.db.ProductList().GetAllInfoProductLissIdOrName(context.TODO(), listID, "")
+func (h *Hub) getGroupList(chatID int64, lastMsgID, listID int) (em *tg.EditMessageTextConfig, err error) {
+	prod, err := h.db.Product().GetByListID(context.TODO(), listID, 0, 100)
 	if err != nil {
 		if err == store.NoRowProductError {
 			em = h.editMessage(chatID, lastMsgID, emptyListMessage)
@@ -34,13 +34,13 @@ func (h *Hub) getGroupList(chatID int64, lastMsgID, listID int, listName string)
 			return nil, err
 		}
 
-	} else if len(list.Products) == 0 {
+	} else if len(prod) == 0 {
 		em = h.editMessage(chatID, lastMsgID, emptyListMessage)
 	} else {
-		text := createMessageProductList(list.Products)
+		text := createMessageProductList(prod)
 		em = h.editMessage(chatID, lastMsgID, text)
 	}
-	em.ReplyMarkup = createInlineProductsGroup(listName, listID)
+	em.ReplyMarkup = createInlineProductsGroup(listID)
 	return em, nil
 }
 
@@ -78,7 +78,33 @@ func (h *Hub) createGroupList(UserID int64, listName string, groupID int) (*tg.M
 	go h.sendNotifAddNewList(UserID, groupID, group.GroupName)
 	msg := h.createMessage(UserID, clearNameList+" created successfully ✅")
 
-	msg.ReplyMarkup = createInlineGetCurGroupList(id, clearNameList)
+	msg.ReplyMarkup = createInlineGetCurGroupList(id)
+	return msg, nil
+}
+
+func (h *Hub) wantCompliteList(chatID int64, products string, listID, lastMsgID int) (*tg.EditMessageTextConfig, error) {
+	if products == emptyListMessage {
+		err := h.db.ProductList().Delete(context.TODO(), listID)
+		if err != nil {
+			return nil, err
+		}
+		editMsg := h.editMessage(chatID, lastMsgID, isCompletesProductListMsg)
+		editMsg.ReplyMarkup = createInlineGoToGroups()
+		if err != nil {
+			return nil, err
+		}
+		return editMsg, nil
+	}
+	infoList, err := h.db.ProductList().GetFoolInfoGroupProdList(context.TODO(), listID)
+	// list, err := h.db.ProductList().GetAllInfoProductLissIdOrName(context.TODO(), listID, "")
+	if err != nil {
+		return nil, err
+	}
+
+	text := createMessageCompliteGroupList(*infoList, chatID)
+	msg := h.editMessage(chatID, lastMsgID, text)
+
+	msg.ReplyMarkup = createInlineAfterComplite(listID, *infoList.List.GroupID, *infoList.List.Name)
 	return msg, nil
 }
 
@@ -108,15 +134,25 @@ func (h *Hub) recoverGroupList(chatID int64, listID, groupID, lastMsgID int, tex
 			return nil, err
 		}
 	} else {
-		prodList := parseTextGroupListToObj(text, chatID, groupID)
-		listID, err = h.db.ProductList().Create(context.TODO(), prodList)
+		list := &store.ProductList{
+			Name:    &listName,
+			OwnerID: &chatID,
+			GroupID: &groupID,
+		}
+		listID, err := h.db.ProductList().Create(context.TODO(), list)
+		if err != nil {
+			return nil, err
+		}
+		splitedText := splitText(text, '\n')
+		prod := parseTextToProd(splitedText, chatID, listID)
+		err = h.db.Product().Add(prod)
 		if err != nil {
 			return nil, err
 		}
 
 	}
 	msg = h.createMessage(chatID, "The list - "+listName+" is recover")
-	msg.ReplyMarkup = createInlineGetCurGroupList(listID, listName)
+	msg.ReplyMarkup = createInlineGetCurGroupList(listID)
 	return msg, nil
 }
 
