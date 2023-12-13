@@ -22,18 +22,24 @@ func createMessageProductList(p []store.Product) string {
 
 func createMessageCompliteGroupList(p store.FoolInfoProductList, complByUser int64) string {
 	s := []byte{}
+	users := map[string]int{}
 	s = append(s, []byte("🪩 List - <b><u>"+*p.List.Name+"</u></b>\n")...)
 	var temp string
-	for _, product := range p.Products {
-		temp = "-  "
-		temp += "<b>" + product.Product + "</b>" + "\n"
+	for _, p := range p.Products {
+		linkProd := createLinkOnProduct(*p.User.UserName, p.Product)
+		temp := "-  " + linkProd + "\n"
 		s = append(s, temp...)
+		if _, ok := users[*p.User.UserName]; !ok {
+			users[*p.User.UserName] = 0
+		}
+		users[*p.User.UserName] += 1
 	}
-	s = append(s, []byte("\n💡 <b>Informations</b> 💡\n")...)
-	// for _, editor := range p.Editors {
-	// 	temp = "🔸 <b>" + *editor.User.UserName + "</b>" + " - " + strconv.Itoa(editor.ManyAddProducts) + " added products\n"
-	// 	s = append(s, temp...)
-	// }
+	s = append(s, []byte("\n💡 <b>Informations</b> 💡\n\n")...)
+	for key, v := range users {
+		temp = "🔸 <b>" + key + "</b>" + " - " + strconv.Itoa(v) + " added products\n"
+		s = append(s, temp...)
+		delete(users, key)
+	}
 	temp = time.Now().Format(time.DateTime)
 	s = append(s, "\n✅ <u>Completed in</u> 📅\n<b>"+temp+"</b>"...)
 	return string(s)
@@ -51,12 +57,12 @@ func createMessageComliteUserList(prod []store.InfoProduct, listName string) str
 	return string(res)
 }
 
-func createMessageSuccessAddedProduct(p []string) string {
+func createMessageSuccessAddedProduct(p []store.Product) string {
 	s := []byte{}
 	row := "Success Added ✅\n"
 	s = append(s, row...)
 	for _, v := range p {
-		row = v + "\n"
+		row = v.Product + "\n"
 		s = append(s, row...)
 	}
 	return string(s)
@@ -74,6 +80,11 @@ func createMessageGetAllUsersGroup(users []store.User, ownerID int64) string {
 		r = append(r, s...)
 	}
 	return string(r)
+}
+
+func createLinkOnProduct(userName, product string) string {
+	s := `<a href="https://t.me/` + userName + `">` + product + `</a>`
+	return s
 }
 
 func createButtonDeleteUser(userName string) string {

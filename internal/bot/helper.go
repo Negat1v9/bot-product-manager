@@ -59,18 +59,28 @@ func convSToI[T int | int64](p string, base int) T {
 }
 
 // Parse Latter is: "," || "."
-func parseStringToProducts(s string) []string {
-	products := []string{}
+func parseStringToProducts(s string, ownerID int64, listID int) []store.Product {
+	products := []store.Product{}
 	prev := 0
 	for i := range s {
 		if s[i] == ',' || s[i] == '.' {
-			products = append(products, helper.CutLineBreak((s[prev:i])))
+			prod := store.Product{
+				Product: helper.CutLineBreak((s[prev:i])),
+				UserID:  ownerID,
+				ListID:  &listID,
+			}
+			products = append(products, prod)
 			prev = i + 1
 		}
 	}
 	// if String does not ends on "." or ","
 	if prev != len(s) {
-		products = append(products, helper.CutLineBreak(s[prev:]))
+		prod := store.Product{
+			Product: helper.CutLineBreak((s[prev:])),
+			UserID:  ownerID,
+			ListID:  &listID,
+		}
+		products = append(products, prod)
 	}
 
 	return products
@@ -177,24 +187,24 @@ func searchOwnerGroup(ownerID int64, users []store.User) *store.User {
 }
 
 // Info: add many of new product in Editors for current list, if its first edits, create one
-func addManyEditsProductList(u store.User, editors []store.Editors, manyNewProducts int) []store.Editors {
-	isExistUser := false
-	indexUser := 0
-	for i, e := range editors {
-		if e.User.ChatID == u.ChatID {
-			indexUser = i
-			isExistUser = true
-			break
-		}
-	}
-	if isExistUser {
-		editors[indexUser].ManyAddProducts += manyNewProducts
-	} else {
-		editor := store.Editors{User: u, ManyAddProducts: manyNewProducts}
-		editors = append(editors, editor)
-	}
-	return editors
-}
+// func addManyEditsProductList(u store.User, editors []store.Editors, manyNewProducts int) []store.Editors {
+// 	isExistUser := false
+// 	indexUser := 0
+// 	for i, e := range editors {
+// 		if e.User.ChatID == u.ChatID {
+// 			indexUser = i
+// 			isExistUser = true
+// 			break
+// 		}
+// 	}
+// 	if isExistUser {
+// 		editors[indexUser].ManyAddProducts += manyNewProducts
+// 	} else {
+// 		editor := store.Editors{User: u, ManyAddProducts: manyNewProducts}
+// 		editors = append(editors, editor)
+// 	}
+// 	return editors
+// }
 
 // Input first row from splited text bu '\n'
 func parseNameTextList(splitedText []string) string {
@@ -224,7 +234,30 @@ func parseTextToProd(text []string, ownerID int64, listID int) []store.Product {
 		}
 	}
 	return prod
+}
 
+func parseTextToProdGroup(text []string, ownerID int64, listID int) []store.Product {
+	prod := []store.Product{}
+	for _, v := range text {
+		if v[0] == '-' {
+			p := store.Product{
+				Product: cutLinkOnUser(v),
+				UserID:  ownerID,
+				ListID:  &listID,
+			}
+			prod = append(prod, p)
+		}
+	}
+	return prod
+}
+func cutLinkOnUser(row string) string {
+	r := len(row) - 4
+	for i := r; i >= 0; i-- {
+		if row[i] == '>' {
+			return row[i+1 : r]
+		}
+	}
+	return ""
 }
 func splitText(text string, key rune) []string {
 	r := []string{}

@@ -144,7 +144,7 @@ func (h *Hub) recoverGroupList(chatID int64, listID, groupID, lastMsgID int, tex
 			return nil, err
 		}
 		splitedText := splitText(text, '\n')
-		prod := parseTextToProd(splitedText, chatID, listID)
+		prod := parseTextToProdGroup(splitedText, chatID, listID)
 		err = h.db.Product().Add(prod)
 		if err != nil {
 			return nil, err

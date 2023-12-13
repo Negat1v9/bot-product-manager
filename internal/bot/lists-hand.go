@@ -94,22 +94,14 @@ func (h *Hub) wantAddNewProduct(chatID int64, products string, listID, lastMsgID
 }
 
 func (h *Hub) addNewProductV2(u store.User, products string, listID int, isGroup bool) (*tg.MessageConfig, error) {
-	// FIXME: move it out
-	newProduct := parseStringToProducts(products)
-	var r []store.Product
-	for _, p := range newProduct {
-		o := store.Product{
-			Product: p,
-			UserID:  u.ChatID,
-			ListID:  &listID,
-		}
-		r = append(r, o)
-	}
-	err := h.db.Product().Add(r)
+
+	newProducts := parseStringToProducts(products, u.ChatID, listID)
+
+	err := h.db.Product().Add(newProducts)
 	if err != nil {
 		return nil, err
 	}
-	text := createMessageSuccessAddedProduct(newProduct)
+	text := createMessageSuccessAddedProduct(newProducts)
 	msg := h.createMessage(u.ChatID, text)
 	if isGroup {
 		msg.ReplyMarkup = createInlineGetCurGroupList(listID)

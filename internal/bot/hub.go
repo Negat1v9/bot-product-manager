@@ -338,12 +338,14 @@ func (h *Hub) editReplyMarkup(chatID int64, markup *tg.InlineKeyboardMarkup, las
 func (h *Hub) editMessage(chatID int64, lastmsgDI int, text string) *tg.EditMessageTextConfig {
 	msg := tg.NewEditMessageText(chatID, lastmsgDI, text)
 	msg.ParseMode = "html"
+	msg.DisableWebPagePreview = true
 	return &msg
 }
 
 func (h *Hub) createMessage(ChatId int64, text string) *tg.MessageConfig {
 	msgCongig := tg.NewMessage(ChatId, text)
 	msgCongig.ParseMode = "html"
+	msgCongig.DisableWebPagePreview = true
 	return &msgCongig
 }
 
