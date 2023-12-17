@@ -236,29 +236,6 @@ func parseTextToProd(text []string, ownerID int64, listID int) []store.Product {
 	return prod
 }
 
-func parseTextToProdGroup(text []string, ownerID int64, listID int) []store.Product {
-	prod := []store.Product{}
-	for _, v := range text {
-		if v[0] == '-' {
-			p := store.Product{
-				Product: cutLinkOnUser(v),
-				UserID:  ownerID,
-				ListID:  &listID,
-			}
-			prod = append(prod, p)
-		}
-	}
-	return prod
-}
-func cutLinkOnUser(row string) string {
-	r := len(row) - 4
-	for i := r; i >= 0; i-- {
-		if row[i] == '>' {
-			return row[i+1 : r]
-		}
-	}
-	return ""
-}
 func splitText(text string, key rune) []string {
 	r := []string{}
 	t := ""

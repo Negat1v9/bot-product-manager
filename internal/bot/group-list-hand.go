@@ -117,7 +117,7 @@ func (h *Hub) compliteGroupList(ChatID int64, name, sGrID, text string, listID, 
 	var markup *tg.InlineKeyboardMarkup
 
 	groupID := convSToI[int](sGrID, 0)
-	go h.sendComplitedListGroupDelay(ChatID, listID, groupID, text)
+	go h.sendComplitedListGroupDelay(ChatID, listID, groupID)
 	markup = createInlineRecoverGroupList(listID, sGrID, name)
 
 	msg := h.editReplyMarkup(ChatID, markup, lastMsgID)
@@ -144,7 +144,7 @@ func (h *Hub) recoverGroupList(chatID int64, listID, groupID, lastMsgID int, tex
 			return nil, err
 		}
 		splitedText := splitText(text, '\n')
-		prod := parseTextToProdGroup(splitedText, chatID, listID)
+		prod := parseTextToProd(splitedText, chatID, listID)
 		err = h.db.Product().Add(prod)
 		if err != nil {
 			return nil, err

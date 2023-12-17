@@ -80,7 +80,7 @@ func (h *Hub) sendNotifAddNewList(createrID int64, groupID int, listName string)
 	return nil
 }
 
-func (h *Hub) sendComplitedListGroupDelay(userComlite int64, listID, groupID int, listText string) {
+func (h *Hub) sendComplitedListGroupDelay(userComlite int64, listID, groupID int) {
 	if ok := h.setTimerForComliteMsg(listID); ok {
 		return
 	}
@@ -90,6 +90,11 @@ func (h *Hub) sendComplitedListGroupDelay(userComlite int64, listID, groupID int
 	if err != nil {
 		return
 	}
+	infoList, err := h.db.ProductList().GetFoolInfoGroupProdList(context.TODO(), listID)
+	if err != nil {
+		return
+	}
+	text := createMessageCompliteGroupList(*infoList, userComlite)
 	if err = h.db.ProductList().Delete(context.TODO(), listID); err != nil {
 		return
 	}
@@ -97,7 +102,7 @@ func (h *Hub) sendComplitedListGroupDelay(userComlite int64, listID, groupID int
 		if userComlite == user.ChatID {
 			continue
 		}
-		msg := h.createMessage(user.ChatID, listText)
+		msg := h.createMessage(user.ChatID, text)
 		h.response <- MessageWithTime{Msg: msg, WorkTime: timeStart}
 	}
 
